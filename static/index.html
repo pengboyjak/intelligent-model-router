@@ -297,6 +297,7 @@ select{cursor:pointer}
     <div class="nav-item" data-page="settings" onclick="navTo('settings')"><span class="nav-dot"></span><span data-i18n="nav_settings">Settings</span></div>
   </div>
   <div class="nav-spacer"></div>
+  <div class="nav-item" data-page="verify" onclick="navTo('verify')"><span class="nav-dot" style="background:var(--danger)"></span><span data-i18n="nav_verify">Verify</span></div>
   <div class="nav-item" data-page="sponsor" onclick="navTo('sponsor')"><span class="nav-dot" style="background:var(--warning)"></span><span data-i18n="nav_sponsor">Sponsor</span></div>
   <div class="ctrl-block">
     <div class="ctrl-label">Theme</div>
@@ -376,6 +377,35 @@ select{cursor:pointer}
   <div class="panel"><div class="panel-header"><span class="panel-indicator" style="background:var(--info)"></span><span class="panel-title" data-i18n="chat_title">Chat</span></div>
     <div class="chat-zone" id="chat-zone"></div>
     <div style="display:flex;gap:8px"><input id="chat-input" data-i18n-placeholder="chat_placeholder" placeholder="Say something..." onkeypress="if(event.key==='Enter')chatSend()" style="font-family:var(--font-body)"><button class="btn btn-primary btn-sm" data-i18n="btn_send" onclick="chatSend()">Send</button></div>
+  </div>
+</section>
+
+<!-- ── Verify ── -->
+<section class="page" id="page-verify">
+  <div class="page-header"><h1 class="page-title" data-i18n="page_verify">Cross-Verification</h1></div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-indicator" style="background:var(--danger)"></span><span class="panel-title" data-i18n="verify_title">Multi-Model Hallucination Detection</span></div>
+    <p style="color:var(--text-secondary);font-size:11px;margin-bottom:12px;line-height:1.7" data-i18n="verify_desc">Paste AI-generated text to have it independently verified by multiple models. Claims are extracted, cross-checked, and scored for factual accuracy.</p>
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+      <select id="vf-models" style="width:auto;min-width:240px" multiple size="3">
+        <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6</option>
+        <option value="claude-haiku-4-5" selected>Claude Haiku 4.5</option>
+        <option value="claude-opus-4-7">Claude Opus 4.7 (slower, strongest)</option>
+      </select>
+      <span style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono)" data-i18n="verify_model_hint">Select 2+ models</span>
+    </div>
+    <textarea id="vf-text" data-i18n-placeholder="verify_placeholder" placeholder="Paste AI-generated text to verify..." style="min-height:150px;font-family:var(--font-body);line-height:1.6"></textarea>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn btn-primary" data-i18n="btn_verify" onclick="runVerification()">Verify</button>
+      <button class="btn btn-sm" onclick="document.getElementById('vf-text').value=''">Clear</button>
+    </div>
+    <div id="vf-result" style="display:none;margin-top:12px"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-indicator" style="background:var(--warning)"></span><span class="panel-title" data-i18n="verify_history_title">Verification History</span></div>
+    <div id="vf-history" style="font-size:10px">
+      <span style="color:var(--text-tertiary);font-family:var(--font-mono)">Loading...</span>
+    </div>
   </div>
 </section>
 
@@ -473,6 +503,10 @@ txt_no_data:'No data yet',txt_no_requests:'No requests yet',txt_no_providers:'No
 txt_loading:'Loading...',txt_routing:'Routing...',txt_configuring:'Configuring agent...',txt_connected_msg:'Connected!',txt_failed_load:'Failed to load',txt_failed:'Failed',
 badge_ok:'OK',badge_err:'ERR',badge_connected:'Connected',badge_disconnected:'Disconnected',badge_custom:'Custom',lbl_effort:'effort',
 toast_key_saved:'key saved',toast_rule_added:'Rule added',toast_config_saved:'Config saved',toast_config_loaded:'Config loaded, click Save',toast_model_added:'Model added',toast_invalid_json:'Invalid JSON',toast_enter_name:'Enter name',toast_enter_task:'Enter a task',toast_enter_id:'Enter model ID',toast_select_model:'Select target model',btn_retry:'Retry',btn_del:'Del',btn_connected:'Connected',btn_connecting:'Connecting...',txt_env_section:'Environment',
+nav_verify:'Verify',page_verify:'Cross-Verification',verify_title:'Multi-Model Hallucination Detection',
+verify_desc:'Paste AI-generated text to have it independently verified by multiple models. Claims are extracted, cross-checked, and scored for factual accuracy.',
+verify_model_hint:'Select 2+ verification models',verify_placeholder:'Paste AI-generated text to verify for hallucinations and factual errors...',
+verify_history_title:'Verification History',btn_verify:'Verify',
 nav_sponsor:'Sponsor',page_sponsor:'Sponsor This Project',sponsor_title:'Support the Development',
 sponsor_desc:'If this project helps you, consider supporting its continued development. Your contribution keeps the gateway free and open-source.',
 sponsor_wechat:'WeChat Pay',sponsor_wechat_desc:'Scan with WeChat',sponsor_usdt:'USDT (TRC20 / ERC20)',sponsor_usdt_desc:'Crypto transfer',
@@ -496,6 +530,10 @@ txt_no_data:'暂无数据',txt_no_requests:'暂无请求记录',txt_no_providers
 txt_loading:'加载中...',txt_routing:'正在路由...',txt_configuring:'正在配置智能体...',txt_connected_msg:'接入成功！',txt_failed_load:'加载失败',txt_failed:'操作失败',
 badge_ok:'成功',badge_err:'失败',badge_connected:'已接入',badge_disconnected:'未接入',badge_custom:'自定义',lbl_effort:'推理深度',
 toast_key_saved:'密钥已保存',toast_rule_added:'规则已添加',toast_config_saved:'配置已保存',toast_config_loaded:'配置已载入，请点击保存以生效',toast_model_added:'模型已添加',toast_invalid_json:'JSON 格式错误，请检查语法',toast_enter_name:'请输入规则名称',toast_enter_task:'请输入任务描述',toast_enter_id:'请输入模型标识符',toast_select_model:'请选择目标模型',btn_retry:'重试',btn_del:'删除',btn_connected:'已接入',btn_connecting:'接入中...',txt_env_section:'环境变量',
+nav_verify:'交叉验证',page_verify:'多模型交叉验证',verify_title:'多模型幻觉检测',
+verify_desc:'粘贴 AI 生成的文本，由多个独立模型进行交叉验证。系统自动提取事实断言，交叉比对，评估真实性。',
+verify_model_hint:'选择 2 个以上验证模型',verify_placeholder:'粘贴需要验证的 AI 生成文本，检测幻觉和事实错误...',
+verify_history_title:'验证历史',btn_verify:'开始验证',
 nav_sponsor:'赞助支持',page_sponsor:'赞助本项目',sponsor_title:'支持项目持续开发',
 sponsor_desc:'如果这个项目对您有帮助，欢迎赞助支持其持续开发。您的贡献将确保网关始终保持免费和开源。',
 sponsor_wechat:'微信支付',sponsor_wechat_desc:'微信扫码',sponsor_usdt:'USDT (TRC20 / ERC20)',sponsor_usdt_desc:'加密货币转账',
@@ -595,7 +633,7 @@ function navTo(p){
   var nv=document.querySelector('[data-page="'+p+'"]');if(nv)nv.classList.add('active');
   if(p==='dashboard')refreshStats();if(p==='providers')loadProviders();if(p==='routes')loadRoutes();
   if(p==='agents'){loadAgents();checkAgentStatus()}if(p==='models')loadModelsPanel();
-  if(p==='playground')populateModelDropdowns();if(p==='settings')loadConfigEditor();
+  if(p==='verify')loadVerifyHistory();if(p==='playground')populateModelDropdowns();if(p==='settings')loadConfigEditor();
 }
 function toast(m,t){var d=document.createElement('div');d.className='toast '+(t||'ok');d.textContent=m;document.getElementById('toasts').appendChild(d);setTimeout(function(){d.remove()},3000)}
 
@@ -659,6 +697,44 @@ async function deleteCustom(mid){try{await api('/api/custom-models/'+mid,{method
 // ══════════ PLAYGROUND ══════════
 async function playgroundRoute(){var task=document.getElementById('pg-task').value.trim();if(!task){toast(t('toast_enter_task'),'err');return}var fm=document.getElementById('pg-force-model').value,budget=document.getElementById('pg-budget').value,rd=document.getElementById('pg-result');rd.style.display='block';rd.innerHTML='<span style="color:var(--text-tertiary);font-family:var(--font-mono)">'+t('txt_routing')+'</span>';try{var body={task:task,budget:budget};if(fm)body.force_model=fm;var d=await api('/api/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});document.getElementById('pipe-model-name').textContent=d.model||'?';rd.innerHTML='<div style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"><span class="tag tag-accent" style="font-size:12px">'+d.model+'</span><span class="tag">'+d.task_type+'</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary)">'+Math.round(d.elapsed_ms||0)+'ms | '+(d.usage?.total_tokens||0)+' tok</span></div><div style="line-height:1.7">'+esc(d.output||'')+'</div>'}catch(e){rd.innerHTML='<span style="color:var(--danger)">'+t('txt_failed')+': '+esc(e+'')+'</span>'}}
 async function chatSend(){var inp=document.getElementById('chat-input'),task=inp.value.trim();if(!task)return;var z=document.getElementById('chat-zone');z.innerHTML+='<div class="chat-msg user">'+esc(task)+'</div>';inp.value='';z.scrollTop=z.scrollHeight;try{var d=await api('/api/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:task})});z.innerHTML+='<div class="chat-msg assistant"><span style="font-size:9px;color:var(--accent);font-family:var(--font-mono)">['+d.model+']</span><br>'+esc(d.output||'')+'</div>';z.scrollTop=z.scrollHeight}catch(e){z.innerHTML+='<div class="chat-msg assistant" style="color:var(--danger)">'+t('txt_failed')+'</div>'}}
+
+// ══════════ VERIFICATION ══════════
+async function runVerification(){
+  var text=document.getElementById('vf-text').value.trim();if(!text){toast('Paste text to verify','err');return}
+  var sel=document.getElementById('vf-models');var models=[];for(var i=0;i<sel.options.length;i++){if(sel.options[i].selected)models.push(sel.options[i].value)}
+  if(models.length<2){toast('Select at least 2 verification models','err');return}
+  var rd=document.getElementById('vf-result');rd.style.display='block';rd.innerHTML='<div style="color:var(--text-tertiary);font-family:var(--font-mono)">Verifying across '+models.length+' models... This may take 30-60 seconds.</div>';
+  try{
+    var d=await api('/api/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,models:models})});
+    // Render report
+    var sc=d.overall_score;var scColor=sc>=0.8?'var(--success)':sc>=0.5?'var(--warning)':'var(--danger)';
+    var h='<div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;align-items:center">';
+    h+='<span style="font-size:22px;color:'+scColor+';font-weight:700;font-family:var(--font-mono)">Credibility: '+(sc*100).toFixed(0)+'%</span>';
+    h+='<span style="font-size:14px;color:var(--danger);font-family:var(--font-mono)">Hallucination: '+(d.hallucination_rate*100).toFixed(0)+'%</span>';
+    h+='<span style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono)">Verified by: '+d.verified_by.join(', ')+' | '+Math.round(d.elapsed_ms)+'ms</span></div>';
+    h+='<pre style="background:var(--bg-primary);padding:10px;border-radius:4px;font-size:10px;font-family:var(--font-mono);margin-bottom:10px;color:var(--text-secondary)">'+esc(d.summary)+'</pre>';
+    // Claims
+    (d.claims||[]).forEach(function(vc){
+      var colors={safe:'var(--success)',caution:'var(--warning)',warning:'var(--danger)',critical:'#ef4444'};
+      var syms={safe:'OK',caution:'?',warning:'WARN',critical:'FAIL'};
+      var c=colors[vc.risk_level]||'var(--text-tertiary)';
+      h+='<div style="border-left:3px solid '+c+';padding:6px 10px;margin:4px 0;background:rgba(0,0,0,0.12)">';
+      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;font-size:10px">';
+      h+='<span style="color:'+c+';font-weight:700;font-family:var(--font-mono)">'+syms[vc.risk_level]+'</span>';
+      h+='<span style="flex:1;font-size:10px">'+esc(vc.text)+'</span>';
+      h+='<span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary)">truth:'+(vc.truth_score*100).toFixed(0)+'% agree:'+(vc.agreement_score*100).toFixed(0)+'%</span></div>';
+      (vc.verdicts||[]).forEach(function(v){h+='<div style="margin-left:18px;font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono)">['+v.model+'] '+v.verdict+' ('+v.reasoning.slice(0,120)+')</div>'});
+      h+='</div>';
+    });
+    if(d.risk_flags&&d.risk_flags.length){h+='<div style="margin-top:10px;padding:10px;background:rgba(248,113,113,0.08);border-radius:4px"><strong style="color:var(--danger);font-size:10px">Flagged Issues:</strong>';d.risk_flags.forEach(function(f){h+='<div style="font-size:9px;color:var(--danger);margin-top:2px;font-family:var(--font-mono)">'+esc(f)+'</div>'});h+='</div>'}
+    rd.innerHTML=h;loadVerifyHistory();
+  }catch(e){rd.innerHTML='<div style="color:var(--danger)">Verification failed: '+esc(e+'')+'</div>'}
+}
+async function loadVerifyHistory(){
+  try{var d=await api('/api/verify/history');var h=d.history||[];
+    document.getElementById('vf-history').innerHTML=h.length?h.reverse().slice(0,10).map(function(r){return '<div style="padding:4px 0;border-bottom:1px solid var(--border)"><span class="tag tag-accent">'+(r.overall_score*100).toFixed(0)+'%</span> <span style="color:var(--text-secondary);font-size:10px">'+esc(r.text_preview||'').slice(0,60)+'...</span> <span style="float:right;color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px">'+r.claims_count+' claims | '+r.flagged_count+' flagged</span></div>'}).join(''):'<span style="color:var(--text-tertiary)">No verification history yet</span>'}
+  catch(e){}
+}
 
 // ══════════ SETTINGS ══════════
 async function loadConfigEditor(){try{var c=await api('/api/config');document.getElementById('cfg-editor').value=JSON.stringify(c,null,2)}catch(e){}}

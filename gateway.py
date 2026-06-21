@@ -369,6 +369,77 @@ def _get_agent_compatibility():
         ]},
     ]
 
+# ── Cross-Verification API ──
+_verification_history: list = []
+
+@app.post("/api/verify")
+async def verify_text(req: dict):
+    """多模型交叉验证 — 消除幻觉和编造"""
+    text = req.get("text", "")
+    models = req.get("models", None)  # None = use defaults
+
+    if not text:
+        raise HTTPException(400, "text is required")
+
+    key = PROVIDER_KEYS.get("anthropic")
+    if not key:
+        raise HTTPException(502, "ANTHROPIC_API_KEY is required for verification")
+
+    try:
+        from verifier import CrossVerifier
+        verifier = CrossVerifier(api_key=key, verification_models=models)
+        report = await verifier.verify_text(text)
+
+        # 保存历史
+        _verification_history.append({
+            "report_id": report.report_id,
+            "text_preview": text[:200],
+            "overall_score": report.overall_score,
+            "hallucination_rate": report.hallucination_rate,
+            "claims_count": len(report.claims),
+            "flagged_count": sum(1 for c in report.claims if c.flagged),
+            "timestamp": time.time(),
+        })
+
+        return {
+            "report_id": report.report_id,
+            "overall_score": report.overall_score,
+            "hallucination_rate": report.hallucination_rate,
+            "claims_count": len(report.claims),
+            "verified_by": report.verified_by,
+            "elapsed_ms": report.elapsed_ms,
+            "summary": report.summary,
+            "claims": [
+                {
+                    "id": vc.claim.id,
+                    "text": vc.claim.text[:200],
+                    "category": vc.claim.category,
+                    "consensus": vc.consensus.value,
+                    "risk_level": vc.risk_level.value,
+                    "truth_score": vc.truth_score,
+                    "agreement_score": vc.agreement_score,
+                    "flagged": vc.flagged,
+                    "verdicts": [
+                        {"model": v.model, "verdict": v.verdict.value, "reasoning": v.reasoning[:200], "confidence": v.confidence}
+                        for v in vc.verdicts
+                    ],
+                }
+                for vc in report.claims
+            ],
+            "risk_flags": report.risk_flags,
+            "html_report": "",  # 客户端用 verifier.report_to_html() 渲染
+        }
+    except Exception as e:
+        logger.error(f"验证失败: {e}")
+        raise HTTPException(500, str(e))
+
+@app.get("/api/verify/history")
+async def verify_history():
+    return {
+        "history": _verification_history[-50:],
+        "total_verifications": len(_verification_history),
+    }
+
 # ── Agent Auto-Connect API ──
 AGENT_CONFIGS = {
     "claude-code": {
