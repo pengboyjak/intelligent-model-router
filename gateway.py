@@ -140,6 +140,8 @@ async def route_task(req: dict):
     t0 = time.time()
     task = req.get("task",""); budget = req.get("budget","normal")
     force_model = req.get("force_model")
+    do_verify = req.get("verify", False)
+    verify_models = req.get("verify_models", None)
     try:
         from router import TaskClassifier, ModelRouter, BudgetLevel, IntelligentModelRouter, _extract_text
         if PROVIDER_KEYS.get("anthropic"):
@@ -149,8 +151,30 @@ async def route_task(req: dict):
             _routing_stats.append({"timestamp":datetime.now().isoformat(),"task":task[:100],
                 "model":result.model_used,"success":result.success,
                 "tokens":result.usage.get("total_tokens",0),"elapsed_ms":elapsed})
-            return {"model":result.model_used,"output":result.output,"usage":result.usage,
+            resp = {"model":result.model_used,"output":result.output,"usage":result.usage,
                     "elapsed_ms":elapsed,"task_type":result.task_id.split("type=")[-1].split("|")[0] if "type=" in result.task_id else "?"}
+
+            # 交叉验证
+            if do_verify and result.output and len(result.output) > 50:
+                try:
+                    from verifier import CrossVerifier
+                    verifier = CrossVerifier(api_key=PROVIDER_KEYS["anthropic"], verification_models=verify_models)
+                    vreport = await verifier.verify_text(result.output)
+                    resp["verification"] = {
+                        "overall_score": vreport.overall_score,
+                        "hallucination_rate": vreport.hallucination_rate,
+                        "summary": vreport.summary,
+                        "verified_by": vreport.verified_by,
+                        "flagged_count": sum(1 for c in vreport.claims if c.flagged),
+                        "risk_flags": vreport.risk_flags,
+                    }
+                    # 如果严重幻觉，在输出末尾追加警告
+                    if vreport.hallucination_rate > 0.3:
+                        resp["output"] += f"\n\n⚠️ [Cross-Verification Warning] Credibility: {vreport.overall_score:.0%}. {len(vreport.risk_flags)} claims flagged. Verified by: {', '.join(vreport.verified_by)}"
+                except Exception as ve:
+                    logger.warning(f"验证跳过: {ve}")
+
+            return resp
         return {"model":"none","output":"请设置 ANTHROPIC_API_KEY","usage":{},"elapsed_ms":0,"task_type":"error"}
     except Exception as e:
         _error_count += 1; logger.error(f"路由失败: {e}")
@@ -162,11 +186,24 @@ async def openai_compat(req: dict):
     model = req.get("model","router:auto")
     messages = req.get("messages",[])
     task = next((m["content"] for m in messages if m.get("role")=="user"), "")
-    if model in ("router:auto","router:auto"):
-        r = await route_task({"task":str(task)[:1000],"messages":messages})
+    # 检测验证模式: router:auto:verify 或 verify=true
+    do_verify = model.endswith(":verify") or req.get("verify", False)
+    if do_verify and model.endswith(":verify"):
+        model = model.replace(":verify", "")  # 去掉后缀
+
+    if model.startswith("router:"):
+        r = await route_task({"task":str(task)[:1000],"messages":messages,"verify":do_verify})
+        content = r["output"]
+        # 如果有验证结果，追加到 content 中
+        vr = r.get("verification")
+        if vr:
+            content += f"\n\n---\n🔍 [Cross-Verified] Credibility: {vr['overall_score']:.0%} | Models: {', '.join(vr['verified_by'])}"
+            if vr.get("risk_flags"):
+                content += "\n⚠️ Flagged: " + "; ".join(vr["risk_flags"][:3])
         return {"id":f"r-{int(time.time())}","object":"chat.completion","created":int(time.time()),
-                "model":r["model"],"choices":[{"index":0,"message":{"role":"assistant","content":r["output"]},"finish_reason":"stop"}],
-                "usage":{"prompt_tokens":r["usage"].get("input_tokens",0),"completion_tokens":r["usage"].get("output_tokens",0),"total_tokens":r["usage"].get("total_tokens",0)}}
+                "model":r["model"],"choices":[{"index":0,"message":{"role":"assistant","content":content},"finish_reason":"stop"}],
+                "usage":{"prompt_tokens":r["usage"].get("input_tokens",0),"completion_tokens":r["usage"].get("output_tokens",0),"total_tokens":r["usage"].get("total_tokens",0)},
+                "verification": vr}
     return {"id":f"p-{int(time.time())}","object":"chat.completion","created":int(time.time()),"model":model,
             "choices":[{"index":0,"message":{"role":"assistant","content":"直接转发模式: 请配置对应 Provider API Key"},"finish_reason":"stop"}],
             "usage":{"prompt_tokens":0,"completion_tokens":0,"total_tokens":0}}
@@ -186,16 +223,24 @@ async def anthropic_compat(req: dict):
     task = user_msgs[-1] if user_msgs else ""
     if system: task = f"[System: {system}]\n\n{task}"
 
+    # 检测验证模式
+    do_verify = model.endswith(":verify") or req.get("verify", False)
+    if do_verify and model.endswith(":verify"):
+        model = model.replace(":verify", "")
+
     if model.startswith("router:"):
         # 自动路由
-        r = await route_task({"task": str(task)[:2000], "budget": "normal"})
-        return {
+        r = await route_task({"task": str(task)[:2000], "budget": "normal", "verify": do_verify})
+        resp = {
             "id": f"msg_{int(time.time()*1000)}", "type": "message", "role": "assistant",
             "model": r["model"],
             "content": [{"type": "text", "text": r["output"]}],
             "stop_reason": "end_turn",
             "usage": {"input_tokens": r["usage"].get("input_tokens", 0), "output_tokens": r["usage"].get("output_tokens", 0)},
         }
+        if r.get("verification"):
+            resp["verification"] = r["verification"]
+        return resp
 
     # 直接转发到 Anthropic API
     key = PROVIDER_KEYS.get("anthropic")

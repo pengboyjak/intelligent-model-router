@@ -134,17 +134,25 @@ class RouterMiddleware:
 
     这是实现 "对智能体透明" 的关键：智能体认为自己调用的是某个模型，
     实际上中间件将其重定向到最优模型。
+
+    支持自动交叉验证：设置 verify_mode=True 后，每次 LLM 调用的产出物
+    会经多模型交叉验证，消除幻觉和编造。
     """
 
     def __init__(
         self,
-        router: Any = None,  # ModelRouter or IntelligentModelRouter
-        provider_registry: Any = None,  # ProviderRegistry
+        router: Any = None,
+        provider_registry: Any = None,
+        verify_mode: bool = False,
+        verify_models: Optional[list[str]] = None,
     ):
         self.router = router
         self.providers = provider_registry
+        self.verify_mode = verify_mode
+        self.verify_models = verify_models
         self._call_history: list[dict] = []
         self._event_hooks: list[Callable[[AgentEvent], None]] = []
+        self._last_verification: Optional[dict] = None
 
     def on_event(self, hook: Callable[[AgentEvent], None]):
         """注册事件钩子"""
@@ -230,7 +238,36 @@ class RouterMiddleware:
 
         elapsed = (time.time() - start_time) * 1000
 
-        # 4. 记录历史
+        # 4. 交叉验证 (如果启用)
+        if self.verify_mode and response.content and len(response.content) > 50:
+            try:
+                from verifier import CrossVerifier
+                verifier = CrossVerifier(
+                    api_key=getattr(self.providers, '_api_key', None),
+                    verification_models=self.verify_models,
+                )
+                vreport = await verifier.verify_text(response.content)
+                self._last_verification = {
+                    "overall_score": vreport.overall_score,
+                    "hallucination_rate": vreport.hallucination_rate,
+                    "summary": vreport.summary,
+                    "verified_by": vreport.verified_by,
+                    "flagged_count": sum(1 for c in vreport.claims if c.flagged),
+                    "risk_flags": vreport.risk_flags,
+                }
+                # 将验证结果追加到响应
+                if vreport.hallucination_rate > 0.3:
+                    response.content += f"\n\n⚠️ [Verified] Credibility: {vreport.overall_score:.0%}. {len(vreport.risk_flags)} issues found."
+                await self._emit_event(AgentEvent(
+                    event_type="verification_complete",
+                    agent_name=agent_config.name if agent_config else "unknown",
+                    data=self._last_verification,
+                ))
+            except Exception as ve:
+                logger.warning(f"验证跳过: {ve}")
+                self._last_verification = None
+
+        # 5. 记录历史
         self._call_history.append({
             "call_id": request.call_id,
             "model": effective_model,
