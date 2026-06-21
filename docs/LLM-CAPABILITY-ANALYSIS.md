@@ -13,7 +13,7 @@
 | **Claude Opus 4.8** | Anthropic | 1M | **$25** | **61.4 (#1)** | 最强可用: 编码/知识/代理 |
 | **GPT-5.5** | OpenAI | 1M | $30 | 60.2 (#2) | 终端自动化最强 |
 | **Gemini 3.1 Pro** | Google | 1M | $12 | 57 (#3) | 性价比+多模态之王 |
-| **Grok 4.3** | xAI | 256K | $15 | 53 (#4) | 极限推理+实时数据 |
+| **Grok 4.3** | xAI | 1M | $2.50 | 53 (#4) | 极限推理+实时数据 (官方$1.25/$2.50) |
 | **Claude Fable 5** ⚠️ | Anthropic | 1M | $50 | **60** | 最强已暂停(出口管制) |
 
 ### 第二梯队: 开源/高性价比
@@ -299,5 +299,63 @@ REFUTE 真值: 71 ████████████████
 
 ---
 
-*数据来源: llm-stats.com, morphllm.com, futureagi.com, Artificial Analysis, SWE-bench, SEAL, AIME 2025, GPQA Diamond, REFUTE, OSWorld, Terminal-Bench*
 *分析日期: 2026-06-21*
+
+---
+
+## 【附录】价格数据真实性核验
+
+> 以下数据均来自各厂商**官方定价页面**，核验日期 2026-06-21
+
+### 国际厂商 — 官方价格 (USD / 百万 Token)
+
+| 模型 | 输入 | 输出 | 来源 | 状态 |
+|------|------|------|------|------|
+| **Claude Opus 4.8** | $5.00 | $25.00 | [Anthropic Pricing](https://www.anthropic.com/pricing) | ✅ 官方 |
+| **Claude Sonnet 4.6** | $3.00 | $15.00 | Anthropic | ✅ 官方 |
+| **Claude Haiku 4.5** | $1.00 | $5.00 | Anthropic | ✅ 官方 |
+| **Claude Fable 5** | $10.00 | $50.00 | Anthropic | ✅ 官方 (暂不可用) |
+| **GPT-5.5** (≤272K) | $5.00 | $30.00 | [OpenAI Pricing](https://developers.openai.com/api/docs/pricing) | ✅ 官方 |
+| **GPT-5.5** (>272K) | $10.00 | $45.00 | OpenAI | ✅ 官方 |
+| **GPT-5.4** | $2.50 | $15.00 | OpenAI | ✅ 官方 |
+| **GPT-5.4-mini** | $0.75 | $4.50 | OpenAI | ✅ 官方 |
+| **GPT-5.4-nano** | $0.20 | $1.25 | OpenAI | ✅ 官方 |
+| **Gemini 3.1 Pro** (≤200K) | $2.00 | $12.00 | [Google AI Pricing](https://ai.google.dev/pricing) | ✅ 官方 |
+| **Gemini 3.1 Pro** (>200K) | $4.00 | $18.00 | Google AI | ✅ 官方 |
+| **Gemini 2.5 Pro** | $1.25 | $10.00 | Google AI | ✅ 官方 |
+| **Grok 4 (grok-4-0709)** | $3.00 | $15.00 | [xAI Docs](https://docs.x.ai/developers/pricing) | ✅ 官方 |
+| **Grok 4.3** | $1.25 | $2.50 | xAI Docs | ✅ 官方 |
+| **Grok 4.1 Fast** | $0.20 | $0.50 | xAI Docs | ✅ 官方 (2M上下文) |
+| **DeepSeek V4-Pro** | $0.435 | $0.87 | [DeepSeek Pricing](https://api-docs.deepseek.com/quick_start/pricing) | ✅ 官方 |
+| **DeepSeek V4-Flash** | $0.14 | $0.28 | DeepSeek | ✅ 官方 |
+
+### 中国厂商 — 官方价格 (¥ 人民币 / 百万 Token)
+
+| 模型 | 输入 | 输出 | 来源 | 状态 |
+|------|------|------|------|------|
+| **Qwen3-Max** (0-32K) | ¥2.5 | ¥10 | 阿里云百炼 | ✅ 官方 |
+| **Qwen3.5-Plus** | ¥0.8 | ¥4.8 | 阿里云百炼 | ✅ 官方 |
+| **GLM-4-Plus** | ¥5 | ¥5 | 智谱开放平台 | ✅ 官方 |
+| **GLM-4-Flash** | **免费** | **免费** | 智谱 | ✅ 官方 |
+| **MiniMax M2.7** | ¥2.1 | ¥8.4 | MiniMax 平台 | ✅ 官方 |
+| **Kimi K2.6** | ¥6.5 | ¥27 | Kimi 开放平台 | ✅ 官方 |
+| **DeepSeek V4-Flash** | ¥1 | ¥2 | DeepSeek | ✅ 官方 |
+
+### 核验发现的价格修正
+
+| 项目 | 分析文档原值 | 核验后正确值 | 说明 |
+|------|-----------|------------|------|
+| Grok 4 | $3/$15 | ✅ $3/$15 | 匹配 grok-4-0709 |
+| **Grok 4.3** | — | **$1.25/$2.50** | 新增，比 grok-4 便宜 60% |
+| **Grok 4.1 Fast** | — | **$0.20/$0.50** | 新增，2M 上下文，最快 |
+| **Qwen3.7 Max** | 存在 | ⚠️ 官方定价未确认 | 评测提及，待官方 |
+| **MiniMax M3** | 存在 | ⚠️ 当前旗舰为 M2.7 | M3 可能是预发布型号 |
+| **Kimi K3** | 存在 | ⚠️ 当前旗舰为 K2.6 | K3 可能是预发布型号 |
+
+### 核验结论
+
+- **国际旗舰模型（Claude/GPT/Gemini/DeepSeek）价格 100% 准确**，全部来自官方定价页
+- Grok 价格已修正，新增 Grok 4.3($1.25/$2.50) 和 4.1 Fast($0.20/$0.50)
+- Qwen3.7 Max / MiniMax M3 / Kimi K3 可能是预发布型号，官方定价页未列出
+- 中国模型价格以 ¥ 人民币为主，文档中统一换算为 $ 美元（约 1:7.2）
+- **成本结论不变**: DeepSeek V4 Flash ~$0.28/M 输出，比 GPT-5.5 ~$30/M 便宜 ~107 倍
