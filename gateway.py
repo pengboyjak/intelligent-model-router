@@ -16,6 +16,7 @@ from typing import Optional
 import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -23,6 +24,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Intelligent Model Router v2.1", version="2.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# Static file serving (QR codes, assets)
+_static_dir = Path(__file__).parent / "static"
+if _static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
 PROVIDER_KEYS: dict = {
     "openai": os.environ.get("OPENAI_API_KEY",""), "anthropic": os.environ.get("ANTHROPIC_API_KEY",""),
@@ -1071,11 +1077,7 @@ async def serve_ui():
         return HTMLResponse(content=ui_file.read_text(encoding="utf-8"))
     return HTMLResponse(content="<h1>UI file not found: static/index.html</h1>")
 
-# Static asset serving (QR codes, etc.)
-from fastapi.staticfiles import StaticFiles
-_static_dir = Path(__file__).parent / "static"
-if _static_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
 
 def main():
     import argparse, uvicorn
