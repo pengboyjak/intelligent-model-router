@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="industrial">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Model Router — Intelligent Gateway</title>
+<style>
+/* ═══════════════════════════════════════════
+   工业精密风 · Industrial Precision
+   设计系统: CSS 变量 + 网格 + 信号流语言
+   ═══════════════════════════════════════════ */
+:root {
+  --unit: 4px;
+  --font-display: '站酷文艺体','ZCOOL KuaiLe','得意黑',sans-serif;
+  --font-body: 'Noto Sans SC','Source Han Sans SC','思源黑体','PingFang SC','Microsoft YaHei',sans-serif;
+  --font-mono: 'JetBrains Mono','Fira Code','Cascadia Code','SF Mono',monospace;
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 0.4s cubic-bezier(0.16,1,0.3,1);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+}
+/* ── 工业灰（默认主题）── */
+[data-theme="industrial"] {
+  --bg-primary: #0d1117; --bg-secondary: #131820; --bg-tertiary: #1a212d;
+  --surface: #161c26; --surface-hover: #1c2330; --surface-raised: #1e2633;
+  --border: rgba(255,255,255,0.06); --border-active: rgba(255,255,255,0.12);
+  --text-primary: #e6edf3; --text-secondary: #8b949e; --text-tertiary: #636c76;
+  --accent: #58a6ff; --accent-dim: rgba(88,166,255,0.12);
+  --success: #3fb950; --warning: #d29922; --danger: #f85149;
+  --info: #79c0ff; --purple: #bc8cff;
+  --glow-accent: 0 0 0 1px rgba(88,166,255,0.3), 0 0 12px rgba(88,166,255,0.15);
+  --glow-success: 0 0 0 1px rgba(63,185,80,0.3), 0 0 12px rgba(63,185,80,0.15);
+  --bg-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+/* ── 暗蓝 ── */
+[data-theme="slate"] {
+  --bg-primary: #0a0e1a; --bg-secondary: #0f1424; --bg-tertiary: #141b30;
+  --surface: #111828; --surface-hover: #161e32; --surface-raised: #192136;
+  --border: rgba(99,130,255,0.08); --border-active: rgba(99,130,255,0.16);
+  --text-primary: #dde4f0; --text-secondary: #8896b4; --text-tertiary: #5e6d8c;
+  --accent: #6c8eff; --accent-dim: rgba(108,142,255,0.12);
+  --success: #34d399; --warning: #fb923c; --danger: #f87171;
+  --info: #818cf8; --purple: #a78bfa;
+  --glow-accent: 0 0 0 1px rgba(108,142,255,0.3), 0 0 12px rgba(108,142,255,0.15);
+  --glow-success: 0 0 0 1px rgba(52,211,153,0.3), 0 0 12px rgba(52,211,153,0.15);
+}
+/* ── 墨绿 ── */
+[data-theme="forest"] {
+  --bg-primary: #0a1410; --bg-secondary: #0e1c14; --bg-tertiary: #13271b;
+  --surface: #101c16; --surface-hover: #15241c; --surface-raised: #182b21;
+  --border: rgba(76,175,80,0.08); --border-active: rgba(76,175,80,0.16);
+  --text-primary: #d4ecd6; --text-secondary: #6aaa70; --text-tertiary: #4a8c50;
+  --accent: #4caf50; --accent-dim: rgba(76,175,80,0.12);
+  --success: #66bb6a; --warning: #ffb74d; --danger: #e57373;
+  --info: #4fc3f7; --purple: #ba68c8;
+  --glow-accent: 0 0 0 1px rgba(76,175,80,0.3), 0 0 12px rgba(76,175,80,0.15);
+  --glow-success: 0 0 0 1px rgba(102,187,106,0.3), 0 0 12px rgba(102,187,106,0.15);
+}
+/* ── 暖棕 ── */
+[data-theme="sepia"] {
+  --bg-primary: #1a0e0a; --bg-secondary: #211410; --bg-tertiary: #2d1c16;
+  --surface: #1c120e; --surface-hover: #241812; --surface-raised: #2b1d16;
+  --border: rgba(251,146,60,0.08); --border-active: rgba(251,146,60,0.16);
+  --text-primary: #ffe8d6; --text-secondary: #b08060; --text-tertiary: #8a6050;
+  --accent: #fb923c; --accent-dim: rgba(251,146,60,0.12);
+  --success: #34d399; --warning: #f97316; --danger: #f87171;
+  --info: #fb923c; --purple: #e879f9;
+  --glow-accent: 0 0 0 1px rgba(251,146,60,0.3), 0 0 12px rgba(251,146,60,0.15);
+  --glow-success: 0 0 0 1px rgba(52,211,153,0.3), 0 0 12px rgba(52,211,153,0.15);
+}
+/* ── 亮色 ── */
+[data-theme="light"] {
+  --bg-primary: #f6f8fa; --bg-secondary: #ffffff; --bg-tertiary: #eef1f5;
+  --surface: #ffffff; --surface-hover: #f3f5f8; --surface-raised: #ffffff;
+  --border: rgba(0,0,0,0.06); --border-active: rgba(0,0,0,0.12);
+  --text-primary: #1a1a2e; --text-secondary: #636c76; --text-tertiary: #8b949e;
+  --accent: #0969da; --accent-dim: rgba(9,105,218,0.08);
+  --success: #1a7f37; --warning: #9a6700; --danger: #cf222e;
+  --info: #0a69da; --purple: #8250df;
+  --glow-accent: 0 0 0 1px rgba(9,105,218,0.2), 0 0 8px rgba(9,105,218,0.08);
+  --glow-success: 0 0 0 1px rgba(26,127,55,0.2), 0 0 8px rgba(26,127,55,0.08);
+}
+
+/* ══════════ RESET & BASE ══════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased}
+body{
+  font-family:var(--font-body);background:var(--bg-primary);color:var(--text-primary);
+  line-height:1.5;overflow:hidden;height:100vh;
+  transition:background var(--transition),color var(--transition);
+}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.5;background-image:var(--bg-noise,unset)}
+
+/* ══════════ LAYOUT ══════════ */
+.app{display:flex;height:100vh;position:relative;z-index:1}
+/* ── 左侧状态条 ── */
+.left-bar{width:4px;background:var(--bg-tertiary);position:relative;flex-shrink:0;transition:background var(--transition)}
+.left-bar::after{content:'';position:absolute;top:0;left:0;width:100%;height:60px;background:linear-gradient(180deg,var(--accent),transparent);opacity:0.6;animation:barGlow 4s ease-in-out infinite}
+@keyframes barGlow{0%,100%{opacity:0.4;height:60px}50%{opacity:0.8;height:120px}}
+
+/* ── 侧边导航 ── */
+.sidebar{
+  width:220px;background:var(--bg-secondary);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;padding:12px 0;
+  transition:background var(--transition),border-color var(--transition);
+}
+.sidebar-brand{padding:16px 20px 12px;border-bottom:1px solid var(--border)}
+.sidebar-brand .brand-name{font-family:var(--font-display);font-size:18px;font-weight:400;color:var(--accent);letter-spacing:0.02em}
+.sidebar-brand .brand-sub{font-size:10px;color:var(--text-tertiary);margin-top:2px;font-family:var(--font-mono);letter-spacing:0.05em}
+.nav-group{padding:8px 0;border-bottom:1px solid var(--border)}
+.nav-group-label{padding:4px 20px 6px;font-size:9px;text-transform:uppercase;color:var(--text-tertiary);letter-spacing:0.12em;font-family:var(--font-mono)}
+.nav-item{
+  display:flex;align-items:center;gap:8px;padding:7px 20px 7px 16px;
+  font-size:12px;color:var(--text-secondary);cursor:pointer;
+  border-left:2px solid transparent;transition:all var(--transition);
+}
+.nav-item:hover{color:var(--text-primary);background:var(--surface-hover)}
+.nav-item.active{color:var(--accent);background:var(--accent-dim);border-left-color:var(--accent)}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0.5;flex-shrink:0}
+.nav-item.active .nav-dot{opacity:1;box-shadow:var(--glow-accent)}
+.nav-spacer{flex:1}
+
+/* ── 控制区 ── */
+.ctrl-block{padding:10px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.ctrl-label{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;color:var(--text-tertiary);letter-spacing:0.08em}
+.theme-dots{display:flex;gap:5px}.t-dot{width:18px;height:18px;border-radius:3px;cursor:pointer;border:1px solid transparent;transition:all var(--transition)}.t-dot:hover{transform:scale(1.15)}.t-dot.active{border-color:var(--accent);box-shadow:var(--glow-accent)}
+.t-dot[data-t="industrial"]{background:linear-gradient(135deg,#0d1117,#58a6ff)}
+.t-dot[data-t="slate"]{background:linear-gradient(135deg,#0a0e1a,#6c8eff)}
+.t-dot[data-t="forest"]{background:linear-gradient(135deg,#0a1410,#4caf50)}
+.t-dot[data-t="sepia"]{background:linear-gradient(135deg,#1a0e0a,#fb923c)}
+.t-dot[data-t="light"]{background:linear-gradient(135deg,#f6f8fa,#0969da);border:1px solid rgba(0,0,0,0.1)}
+.lang-sel{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);width:100%;cursor:pointer;outline:none;transition:all var(--transition)}.lang-sel:focus{border-color:var(--accent)}
+
+/* ── 主区域 ── */
+.main{flex:1;overflow-y:auto;position:relative;padding:0}
+.main::-webkit-scrollbar{width:4px}.main::-webkit-scrollbar-track{background:transparent}.main::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.page{display:none;padding:32px 40px;animation:pageIn 0.35s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.page-title{font-family:var(--font-display);font-size:22px;font-weight:400;color:var(--text-primary);letter-spacing:0.01em}
+.page-meta{font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary)}
+
+/* ══════════ COMPONENTS ══════════ */
+/* ── 面板 ── */
+.panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  padding:20px 24px;margin-bottom:14px;transition:all var(--transition);
+}
+.panel:hover{border-color:var(--border-active)}
+.panel-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.panel-title{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em}
+.panel-indicator{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:var(--glow-accent)}
+
+/* ── 统计卡 ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  padding:18px 20px;transition:all var(--transition);position:relative;overflow:hidden;
+}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:var(--accent);transform:scaleX(0);transition:transform var(--transition);transform-origin:left}
+.stat-card:hover::before{transform:scaleX(1)}
+.stat-card:hover{border-color:var(--border-active);box-shadow:var(--shadow-md)}
+.stat-label{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-tertiary);margin-bottom:6px}
+.stat-value{font-family:var(--font-mono);font-size:26px;font-weight:600;letter-spacing:-0.02em}
+.stat-sub{font-size:10px;color:var(--text-tertiary);margin-top:4px;font-family:var(--font-mono)}
+
+/* ── 表格 ── */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{text-align:left;padding:8px 10px;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-tertiary);border-bottom:1px solid var(--border);font-weight:500}
+.tbl td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:11px;vertical-align:middle}
+.tbl tr:hover td{background:var(--surface-hover)}
+
+/* ── 行 ── */
+.row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;transition:background var(--transition)}
+.row:hover{background:var(--surface-hover)}
+.row-name{font-weight:600;min-width:150px;font-family:var(--font-mono);font-size:11px}
+.row-models{flex:1;font-size:10px;color:var(--text-secondary)}
+.row-actions{display:flex;gap:4px;flex-shrink:0}
+
+/* ── 按钮 ── */
+.btn{
+  display:inline-flex;align-items:center;gap:5px;padding:6px 14px;
+  border-radius:4px;border:1px solid var(--border);cursor:pointer;
+  font-family:var(--font-mono);font-size:11px;font-weight:500;
+  background:var(--surface);color:var(--text-primary);
+  transition:all var(--transition);white-space:nowrap;outline:none;
+}
+.btn:hover{background:var(--surface-hover);border-color:var(--border-active)}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{box-shadow:var(--glow-accent);opacity:0.9}
+.btn-danger{color:var(--danger);border-color:rgba(248,81,73,0.2)}.btn-danger:hover{background:rgba(248,81,73,0.08)}
+.btn-sm{padding:3px 8px;font-size:10px;border-radius:3px}
+.btn-xs{padding:2px 6px;font-size:9px;border-radius:2px}
+
+/* ── 输入 ── */
+input,select,textarea{
+  background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;
+  padding:6px 10px;color:var(--text-primary);font-family:var(--font-mono);
+  font-size:11px;width:100%;outline:none;transition:all var(--transition);
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+textarea{resize:vertical;min-height:60px;line-height:1.5}
+select{cursor:pointer}
+
+/* ── 标签/开关 ── */
+.tag{display:inline-block;padding:1px 7px;border-radius:3px;font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:0.03em}
+.tag-accent{background:var(--accent-dim);color:var(--accent)}
+.tag-ok{background:rgba(63,185,80,0.12);color:var(--success)}
+.tag-warn{background:rgba(210,153,34,0.12);color:var(--warning)}
+.tag-err{background:rgba(248,81,73,0.12);color:var(--danger)}
+.toggle{position:relative;width:36px;height:20px;display:inline-block;flex-shrink:0}
+.toggle input{display:none}
+.toggle .slider{position:absolute;inset:0;background:var(--bg-tertiary);border-radius:10px;transition:all 0.25s;cursor:pointer;border:1px solid var(--border)}
+.toggle .slider::before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:var(--text-secondary);top:2px;left:2px;transition:all 0.25s}.toggle input:checked+.slider{background:var(--accent-dim);border-color:var(--accent)}.toggle input:checked+.slider::before{transform:translateX(16px);background:var(--accent)}
+
+/* ── 分隔线 ── */
+.divider{height:1px;background:var(--border);margin:12px 0}
+.section-label{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent);margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+
+/* ── 流水线 ── */
+.pipeline{display:flex;align-items:center;gap:0;padding:8px 0;flex-wrap:wrap}
+.p-node{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:10px 16px;border:1px solid var(--border);border-radius:4px;
+  background:var(--surface);min-width:90px;transition:all var(--transition);
+}
+.p-node:hover{border-color:var(--border-active)}
+.p-node.active{border-color:var(--accent);background:var(--accent-dim)}
+.p-dot{width:6px;height:6px;border-radius:50%;background:var(--text-tertiary);margin-bottom:2px}
+.p-node.active .p-dot{background:var(--accent);box-shadow:var(--glow-accent);animation:dotPulse 2s ease-in-out infinite}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 4px var(--accent)}50%{box-shadow:0 0 14px var(--accent)}}
+.p-label{font-family:var(--font-mono);font-size:8px;text-transform:uppercase;color:var(--text-tertiary);letter-spacing:0.08em}
+.p-val{font-size:10px;color:var(--text-primary);font-weight:500}
+.p-arrow{color:var(--text-tertiary);padding:0 6px;font-family:var(--font-mono);font-size:14px;opacity:0.4}
+
+/* ── 模态框 ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{
+  background:var(--surface-raised);border:1px solid var(--border-active);border-radius:8px;
+  padding:24px;max-width:480px;width:92%;max-height:85vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);animation:modalIn 0.25s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+.modal-box h4{font-family:var(--font-display);font-size:16px;font-weight:400;margin-bottom:16px;color:var(--text-primary)}
+.form-row{margin-bottom:12px}.form-row label{display:block;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-tertiary);margin-bottom:4px}
+
+/* ── Toast ── */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px}
+.toast{padding:10px 18px;border-radius:4px;color:#fff;font-family:var(--font-mono);font-size:11px;animation:toastIn 0.3s cubic-bezier(0.16,1,0.3,1);box-shadow:var(--shadow-md)}
+.toast.ok{background:var(--success)}.toast.err{background:var(--danger)}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── 对话 ── */
+.chat-zone{max-height:260px;overflow-y:auto;padding:10px;background:var(--bg-primary);border-radius:4px;margin-bottom:8px;border:1px solid var(--border)}
+.chat-msg{margin:4px 0;padding:6px 12px;border-radius:4px;max-width:80%;animation:msgIn 0.2s ease;font-size:11px;line-height:1.6}
+.chat-msg.user{background:var(--accent-dim);color:var(--accent);margin-left:auto;border:1px solid rgba(88,166,255,0.15);font-family:var(--font-mono)}
+.chat-msg.assistant{background:var(--surface);border:1px solid var(--border);font-family:var(--font-body)}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── 响应式 ── */
+@media(max-width:800px){
+  .sidebar{width:56px}.sidebar-brand,.nav-group-label,.nav-item span,.ctrl-block{display:none}
+  .nav-item{justify-content:center;padding:10px}.nav-dot{width:6px;height:6px;margin:0}
+  .main{padding:0}.page{padding:16px 12px}.stats-grid{grid-template-columns:repeat(2,1fr)}
+  .page-title{font-size:18px}.pipeline{flex-wrap:wrap;gap:4px}.p-arrow{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- ══ 左侧状态条 ══ -->
+<div class="left-bar"></div>
+
+<!-- ══ 侧边导航 ══ -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">Model Router</div>
+    <div class="brand-sub">v2.4 · Gateway</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label" data-i18n="group_overview">Overview</div>
+    <div class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')"><span class="nav-dot"></span><span data-i18n="nav_dashboard">Dashboard</span></div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label" data-i18n="group_config">Configuration</div>
+    <div class="nav-item" data-page="providers" onclick="navTo('providers')"><span class="nav-dot"></span><span data-i18n="nav_providers">Providers</span></div>
+    <div class="nav-item" data-page="routes" onclick="navTo('routes')"><span class="nav-dot"></span><span data-i18n="nav_routes">Routing Rules</span></div>
+    <div class="nav-item" data-page="models" onclick="navTo('models')"><span class="nav-dot"></span><span data-i18n="nav_models">Model Registry</span></div>
+    <div class="nav-item" data-page="agents" onclick="navTo('agents')"><span class="nav-dot"></span><span data-i18n="nav_agents">Agent Connect</span></div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label" data-i18n="group_tools">Tools</div>
+    <div class="nav-item" data-page="playground" onclick="navTo('playground')"><span class="nav-dot"></span><span data-i18n="nav_playground">Playground</span></div>
+    <div class="nav-item" data-page="settings" onclick="navTo('settings')"><span class="nav-dot"></span><span data-i18n="nav_settings">Settings</span></div>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-item" data-page="sponsor" onclick="navTo('sponsor')"><span class="nav-dot" style="background:var(--warning)"></span><span data-i18n="nav_sponsor">Sponsor</span></div>
+  <div class="ctrl-block">
+    <div class="ctrl-label">Theme</div>
+    <div class="theme-dots">
+      <div class="t-dot active" data-t="industrial" title="Industrial" onclick="setTheme('industrial')"></div>
+      <div class="t-dot" data-t="slate" title="Slate Blue" onclick="setTheme('slate')"></div>
+      <div class="t-dot" data-t="forest" title="Forest" onclick="setTheme('forest')"></div>
+      <div class="t-dot" data-t="sepia" title="Sepia" onclick="setTheme('sepia')"></div>
+      <div class="t-dot" data-t="light" title="Light" onclick="setTheme('light')"></div>
+    </div>
+    <div class="ctrl-label">Language</div>
+    <select class="lang-sel" id="lang-switcher" onchange="switchLang(this.value)"></select>
+  </div>
+</nav>
+
+<!-- ══ 主内容区 ══ -->
+<main class="main" id="main-content">
+
+<!-- ── 仪表盘 ── -->
+<section class="page active" id="page-dashboard">
+  <div class="page-header"><h1 class="page-title" data-i18n="page_dashboard">Dashboard</h1><span class="page-meta" id="dash-clock"></span></div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-indicator"></span><span class="panel-title" data-i18n="pipeline_title">Routing Pipeline</span></div>
+    <div class="pipeline">
+      <div class="p-node active"><span class="p-dot"></span><span class="p-label" data-i18n="pipe_input">Input</span><span class="p-val" data-i18n="pipe_input_val">Task</span></div><span class="p-arrow">→</span>
+      <div class="p-node active"><span class="p-dot"></span><span class="p-label" data-i18n="pipe_classifier">Classifier</span><span class="p-val">Haiku</span></div><span class="p-arrow">→</span>
+      <div class="p-node active"><span class="p-dot"></span><span class="p-label" data-i18n="pipe_router">Router</span><span class="p-val" data-i18n="pipe_router_val">Engine</span></div><span class="p-arrow">→</span>
+      <div class="p-node active"><span class="p-dot"></span><span class="p-label" data-i18n="pipe_execute">Execute</span><span class="p-val" id="pipe-model-name">Auto</span></div><span class="p-arrow">→</span>
+      <div class="p-node"><span class="p-dot"></span><span class="p-label" data-i18n="pipe_response">Response</span><span class="p-val" data-i18n="pipe_response_val">Orch</span></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="panel"><div class="panel-header"><span class="panel-indicator" style="background:var(--purple)"></span><span class="panel-title" data-i18n="model_dist_title">Model Distribution</span></div><div id="model-dist"></div></div>
+    <div class="panel"><div class="panel-header"><span class="panel-indicator" style="background:var(--info)"></span><span class="panel-title" data-i18n="recent_reqs_title">Recent Requests</span></div><div id="recent-reqs" style="max-height:200px;overflow-y:auto"></div></div>
+  </div>
+</section>
+
+<!-- ── 提供商 ── -->
+<section class="page" id="page-providers">
+  <div class="page-header"><h1 class="page-title" data-i18n="page_providers">Providers</h1><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" data-i18n="btn_custom_model" onclick="showAddModelModal()">+ Custom Model</button><button class="btn btn-sm" data-i18n="btn_refresh" onclick="loadProviders()">Refresh</button></div></div>
+  <div class="panel" id="provider-list"></div>
+</section>
+
+<!-- ── 路由 ── -->
+<section class="page" id="page-routes">
+  <div class="page-header"><h1 class="page-title" data-i18n="page_routes">Routing Rules</h1><button class="btn btn-primary btn-sm" data-i18n="btn_add_rule" onclick="openRouteModal()">+ Add Rule</button></div>
+  <div class="panel" id="route-list"></div>
+</section>
+
+<!-- ── 智能体 ── -->
+<section class="page" id="page-agents">
+  <div class="page-header"><h1 class="page-title" data-i18n="page_agents">Agent Connect</h1><button class="btn btn-primary btn-sm" data-i18n="btn_detect" onclick="checkAgentStatus()">Detect Status</button></div>
+  <div class="panel"><div class="panel-header"><span class="panel-indicator"></span><span class="panel-title" data-i18n="one_click_title">One-Click Connect</span></div><div style="margin-bottom:8px;font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono)"><span data-i18n="gateway_label">Gateway</span>: <code style="color:var(--accent)" id="gw-url">http://localhost:8701</code></div><div id="agent-connect-list"></div></div>
+  <div class="panel"><div class="panel-header"><span class="panel-indicator" style="background:var(--purple)"></span><span class="panel-title" data-i18n="compat_title">Compatibility Reference</span></div><div id="agent-compat"></div></div>
+</section>
+
+<!-- ── 模型 ── -->
+<section class="page" id="page-models">
+  <div class="page-header"><h1 class="page-title" data-i18n="page_models">Model Registry</h1><button class="btn btn-primary btn-sm" data-i18n="btn_custom_model2" onclick="showAddModelModal()">+ Custom Model</button></div>
+  <div class="panel"><div class="panel-header"><span class="panel-indicator"></span><span class="panel-title" data-i18n="enabled_models_title">Enabled Models</span></div><div id="enabled-models"></div></div>
+  <div class="panel"><div class="panel-header"><span class="panel-indicator" style="background:var(--warning)"></span><span class="panel-title" data-i18n="custom_models_title">Custom Models</span></div><div id="custom-models"></div></div>
+</section>
+
+<!-- ── Playground ── -->
+<section class="page" id="page-playground">
+  <div class="page-header"><h1 class="page-title" data-i18n="page_playground">Playground</h1></div>
+  <div class="panel"><div class="panel-header"><span class="panel-indicator"></span><span class="panel-title" data-i18n="test_routing_title">Test Auto-Routing</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <select id="pg-force-model" style="width:auto;min-width:200px"><option value="" data-i18n="router_auto_opt">router:auto (automatic)</option></select>
+      <select id="pg-budget" style="width:auto"><option value="normal" data-i18n="budget_normal">Normal</option><option value="high" data-i18n="budget_high">High</option><option value="low" data-i18n="budget_low">Low</option></select>
+    </div>
+    <textarea id="pg-task" data-i18n-placeholder="task_placeholder" placeholder="Describe your task..." style="font-family:var(--font-body)"></textarea>
+    <div style="margin-top:8px"><button class="btn btn-primary" data-i18n="btn_execute" onclick="playgroundRoute()">Execute</button></div>
+    <div id="pg-result" style="display:none;margin-top:12px;padding:12px;background:var(--bg-primary);border-radius:4px;border:1px solid var(--border);max-height:360px;overflow-y:auto;font-size:11px;white-space:pre-wrap;font-family:var(--font-body);line-height:1.7"></div>
+  </div>
+  <div class="panel"><div class="panel-header"><span class="panel-indicator" style="background:var(--info)"></span><span class="panel-title" data-i18n="chat_title">Chat</span></div>
+    <div class="chat-zone" id="chat-zone"></div>
+    <div style="display:flex;gap:8px"><input id="chat-input" data-i18n-placeholder="chat_placeholder" placeholder="Say something..." onkeypress="if(event.key==='Enter')chatSend()" style="font-family:var(--font-body)"><button class="btn btn-primary btn-sm" data-i18n="btn_send" onclick="chatSend()">Send</button></div>
+  </div>
+</section>
+
+<!-- ── Sponsor ── -->
+<section class="page" id="page-sponsor">
+  <div class="page-header"><h1 class="page-title" data-i18n="page_sponsor">Sponsor This Project</h1></div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-indicator" style="background:var(--warning)"></span><span class="panel-title" data-i18n="sponsor_title">Support the Development</span></div>
+    <p style="color:var(--text-secondary);font-size:12px;margin-bottom:20px;line-height:1.8" data-i18n="sponsor_desc">If this project helps you, consider supporting its continued development. Your contribution keeps the gateway free and open-source.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px">
+      <div style="text-align:center">
+        <div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;padding:16px">
+          <img src="/static/assets/wechat-pay.jpg" alt="WeChat Pay" style="width:100%;max-width:220px;border-radius:4px;display:block;margin:0 auto">
+        </div>
+        <div style="margin-top:10px;font-family:var(--font-mono);font-size:11px;color:var(--success);font-weight:600" data-i18n="sponsor_wechat">WeChat Pay</div>
+        <div style="font-size:10px;color:var(--text-tertiary)" data-i18n="sponsor_wechat_desc">Scan with WeChat</div>
+      </div>
+      <div style="text-align:center">
+        <div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;padding:16px">
+          <img src="/static/assets/usdt-pay.jpg" alt="USDT" style="width:100%;max-width:220px;border-radius:4px;display:block;margin:0 auto">
+        </div>
+        <div style="margin-top:10px;font-family:var(--font-mono);font-size:11px;color:var(--accent);font-weight:600" data-i18n="sponsor_usdt">USDT (TRC20 / ERC20)</div>
+        <div style="font-size:10px;color:var(--text-tertiary)" data-i18n="sponsor_usdt_desc">Crypto transfer</div>
+      </div>
+      <div style="text-align:center">
+        <div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;padding:16px">
+          <img src="/static/assets/binance-pay.jpg" alt="Binance Pay" style="width:100%;max-width:220px;border-radius:4px;display:block;margin:0 auto">
+        </div>
+        <div style="margin-top:10px;font-family:var(--font-mono);font-size:11px;color:var(--warning);font-weight:600" data-i18n="sponsor_binance">Binance Pay</div>
+        <div style="font-size:10px;color:var(--text-tertiary)" data-i18n="sponsor_binance_desc">Scan with Binance App</div>
+      </div>
+    </div>
+    <div style="margin-top:24px;padding:14px;background:var(--accent-dim);border-radius:6px;font-size:11px;color:var(--text-secondary);line-height:1.8" data-i18n="sponsor_thanks">Thank you for every contribution! All sponsors will be listed in the project README. The gateway remains free and open-source for everyone.</div>
+  </div>
+</section>
+
+<!-- ── Settings ── -->
+<section class="page" id="page-settings">
+  <div class="page-header"><h1 class="page-title" data-i18n="page_settings">Settings</h1></div>
+  <div class="panel"><div class="panel-header"><span class="panel-indicator"></span><span class="panel-title" data-i18n="config_title">Configuration YAML</span></div>
+    <div style="display:flex;gap:6px;margin-bottom:10px"><button class="btn btn-primary btn-sm" data-i18n="btn_export" onclick="exportConfig()">Export</button><button class="btn btn-sm" data-i18n="btn_import" onclick="document.getElementById('import-file').click()">Import</button><input type="file" id="import-file" style="display:none" accept=".yaml,.yml,.json" onchange="importConfig(event)"><button class="btn btn-sm" data-i18n="btn_reload" onclick="loadConfigEditor()">Reload</button></div>
+    <textarea id="cfg-editor" style="min-height:400px;font-family:var(--font-mono);font-size:11px;line-height:1.6" spellcheck="false"></textarea>
+    <div style="margin-top:10px"><button class="btn btn-primary" data-i18n="btn_save" onclick="saveFullConfig()">Save</button></div>
+  </div>
+</section>
+</main></div>
+
+<!-- ══ 模态框 ══ -->
+<div class="modal-overlay" id="modal-custom-model"><div class="modal-box">
+  <h4 data-i18n="modal_custom_title">+ Custom Model</h4>
+  <div class="form-row"><label data-i18n="field_model_id">Model ID</label><input id="am-id"></div>
+  <div class="form-row"><label data-i18n="field_display_name">Display Name</label><input id="am-name"></div>
+  <div class="form-row"><label data-i18n="field_provider">Provider</label><select id="am-provider"><option value="custom" data-i18n="opt_custom">Custom</option></select></div>
+  <div class="form-row"><label data-i18n="field_api_url">API Base URL</label><input id="am-url" placeholder="https://api.example.com/v1"></div>
+  <div class="form-row"><label data-i18n="field_api_key">API Key</label><input type="password" id="am-key"></div>
+  <div class="form-row"><label data-i18n="field_api_format">API Format</label><select id="am-format"><option value="openai">OpenAI Compatible</option><option value="anthropic">Anthropic Compatible</option></select></div>
+  <div class="form-row"><label data-i18n="field_context">Context Window</label><input id="am-ctx" value="128000"></div>
+  <div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary" data-i18n="btn_add" onclick="addCustomModel()">Add</button><button class="btn btn-sm" data-i18n="btn_cancel" onclick="closeModal('modal-custom-model')">Cancel</button></div>
+</div></div>
+<div class="modal-overlay" id="modal-route"><div class="modal-box">
+  <h4 data-i18n="modal_route_title">Add Routing Rule</h4>
+  <div class="form-row"><label data-i18n="field_rule_name">Rule Name</label><input id="ar-name"></div>
+  <div class="form-row"><label data-i18n="field_match_domain">Match Domain</label><select id="ar-domain"><option value="" data-i18n="opt_any">Any</option><option value="architecture" data-i18n="opt_domain_arch">Architecture</option><option value="coding" data-i18n="opt_domain_coding">Coding</option><option value="review" data-i18n="opt_domain_review">Code Review</option><option value="testing" data-i18n="opt_domain_testing">Testing</option><option value="docs" data-i18n="opt_domain_docs">Documentation</option><option value="research" data-i18n="opt_domain_research">Research</option><option value="data_analysis" data-i18n="opt_domain_data">Data Analysis</option></select></div>
+  <div class="form-row"><label data-i18n="field_match_complexity">Match Complexity</label><select id="ar-complexity"><option value="" data-i18n="opt_any">Any</option><option value="simple" data-i18n="opt_simple">Simple</option><option value="moderate" data-i18n="opt_moderate">Moderate</option><option value="complex" data-i18n="opt_complex">Complex</option><option value="very_complex" data-i18n="opt_very_complex">Very Complex</option></select></div>
+  <div class="form-row"><label data-i18n="field_target_model">Target Model</label><select id="ar-model"><option value="" data-i18n="opt_select_model">-- Select Model --</option></select></div>
+  <div class="form-row"><label data-i18n="field_effort">Effort Level</label><select id="ar-effort"><option value="high">high</option><option value="xhigh">xhigh</option><option value="max">max</option><option value="medium">medium</option><option value="low">low</option></select></div>
+  <div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary" data-i18n="btn_add_rule_modal" onclick="addRouteFromModal()">Add</button><button class="btn btn-sm" data-i18n="btn_cancel" onclick="closeModal('modal-route')">Cancel</button></div>
+</div></div>
+<div class="modal-overlay" id="modal-agent-connect"><div class="modal-box">
+  <h4 id="acm-title" data-i18n="modal_connect_title">Connect Agent</h4>
+  <div class="form-row"><label data-i18n="field_gateway_url">Gateway URL</label><input id="acm-url" value="http://localhost:8701"></div>
+  <div class="form-row"><label data-i18n="field_api_key_opt">API Key (optional)</label><input type="password" id="acm-key" placeholder="router-key"></div>
+  <div class="form-row"><label data-i18n="field_model">Model</label><input id="acm-model" value="router:auto"></div>
+  <div id="acm-result" style="margin:12px 0;padding:10px;background:var(--bg-primary);border-radius:4px;max-height:180px;overflow-y:auto;font-size:10px;display:none;font-family:var(--font-mono)"></div>
+  <div style="display:flex;gap:8px"><button class="btn btn-primary" id="acm-btn" data-i18n="btn_connect" onclick="doAgentConnect()">Connect</button><button class="btn btn-sm" data-i18n="btn_close" onclick="closeModal('modal-agent-connect')">Close</button></div>
+</div></div>
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+// ══════════ I18N ══════════
+const LOCALES={en:{
+group_overview:'Overview',group_config:'Configuration',group_tools:'Tools',
+nav_dashboard:'Dashboard',nav_providers:'Providers',nav_routes:'Routing Rules',nav_agents:'Agent Connect',nav_models:'Model Registry',nav_playground:'Playground',nav_settings:'Settings',
+page_dashboard:'Dashboard',page_providers:'Providers',page_routes:'Routing Rules',page_agents:'Agent Connect',page_models:'Model Registry',page_playground:'Playground',page_settings:'Settings',
+pipeline_title:'Routing Pipeline',pipe_input:'Input',pipe_input_val:'Task',pipe_classifier:'Classifier',pipe_router:'Router',pipe_router_val:'Engine',pipe_execute:'Execute',pipe_execute_val:'Auto',pipe_response:'Response',pipe_response_val:'Orch',
+model_dist_title:'Model Distribution',recent_reqs_title:'Recent Requests',
+btn_custom_model:'+ Custom Model',btn_custom_model2:'+ Custom Model',btn_refresh:'Refresh',btn_add_rule:'+ Add Rule',btn_detect:'Detect Status',btn_execute:'Execute',btn_send:'Send',btn_export:'Export',btn_import:'Import',btn_reload:'Reload',btn_save:'Save',btn_add:'Add',btn_cancel:'Cancel',btn_add_rule_modal:'Add',btn_connect:'Connect',btn_close:'Close',
+one_click_title:'One-Click Connect',gateway_label:'Gateway',compat_title:'Compatibility Reference',enabled_models_title:'Enabled Models',custom_models_title:'Custom Models',test_routing_title:'Test Auto-Routing',chat_title:'Chat',config_title:'Configuration YAML',
+router_auto_opt:'router:auto (automatic)',budget_normal:'Budget: Normal',budget_high:'Budget: High',budget_low:'Budget: Low',task_placeholder:'Describe your task...',chat_placeholder:'Say something...',
+modal_custom_title:'+ Custom Model',modal_route_title:'Add Routing Rule',modal_connect_title:'Connect Agent',
+field_model_id:'Model ID',field_display_name:'Display Name',field_provider:'Provider',field_api_url:'API Base URL',field_api_key:'API Key',field_api_format:'API Format',field_context:'Context Window',field_gateway_url:'Gateway URL',field_api_key_opt:'API Key (optional)',field_model:'Model',field_rule_name:'Rule Name',field_match_domain:'Match Domain',field_match_complexity:'Match Complexity',field_target_model:'Target Model',field_effort:'Effort Level',
+opt_custom:'Custom',opt_any:'Any',opt_simple:'Simple',opt_moderate:'Moderate',opt_complex:'Complex',opt_very_complex:'Very Complex',opt_select_model:'-- Select Model --',opt_domain_arch:'Architecture',opt_domain_coding:'Coding',opt_domain_review:'Code Review',opt_domain_testing:'Testing',opt_domain_docs:'Documentation',opt_domain_research:'Research',opt_domain_data:'Data Analysis',
+stat_total_requests:'Requests',stat_success_rate:'Success Rate',stat_total_tokens:'Total Tokens',stat_uptime:'Uptime',stat_sub_session:'this session',stat_sub_errors:'errors',stat_sub_models:'models',stat_sub_usd_est:'USD est.',
+txt_no_data:'No data yet',txt_no_requests:'No requests yet',txt_no_providers:'No providers loaded',txt_no_rules:'No rules defined',txt_no_models:'No enabled models',txt_no_custom:'No custom models',txt_no_agents:'No agents detected',
+txt_loading:'Loading...',txt_routing:'Routing...',txt_configuring:'Configuring agent...',txt_connected_msg:'Connected!',txt_failed_load:'Failed to load',txt_failed:'Failed',
+badge_ok:'OK',badge_err:'ERR',badge_connected:'Connected',badge_disconnected:'Disconnected',badge_custom:'Custom',lbl_effort:'effort',
+toast_key_saved:'key saved',toast_rule_added:'Rule added',toast_config_saved:'Config saved',toast_config_loaded:'Config loaded, click Save',toast_model_added:'Model added',toast_invalid_json:'Invalid JSON',toast_enter_name:'Enter name',toast_enter_task:'Enter a task',toast_enter_id:'Enter model ID',toast_select_model:'Select target model',btn_retry:'Retry',btn_del:'Del',btn_connected:'Connected',btn_connecting:'Connecting...',txt_env_section:'Environment',
+nav_sponsor:'Sponsor',page_sponsor:'Sponsor This Project',sponsor_title:'Support the Development',
+sponsor_desc:'If this project helps you, consider supporting its continued development. Your contribution keeps the gateway free and open-source.',
+sponsor_wechat:'WeChat Pay',sponsor_wechat_desc:'Scan with WeChat',sponsor_usdt:'USDT (TRC20 / ERC20)',sponsor_usdt_desc:'Crypto transfer',
+sponsor_binance:'Binance Pay',sponsor_binance_desc:'Scan with Binance App',
+sponsor_thanks:'Thank you for every contribution! All sponsors will be listed in the project README. The gateway remains free and open-source for everyone.',
+},
+'zh-CN':{
+group_overview:'概览',group_config:'系统配置',group_tools:'调试工具',
+nav_dashboard:'仪表盘',nav_providers:'服务提供商',nav_routes:'路由规则',nav_agents:'智能体接入',nav_models:'模型注册',nav_playground:'路由调试',nav_settings:'系统设置',
+page_dashboard:'仪表盘',page_providers:'服务提供商配置',page_routes:'路由规则管理',page_agents:'智能体接入管理',page_models:'模型注册管理',page_playground:'路由调试',page_settings:'系统设置',
+pipeline_title:'路由处理流程',pipe_input:'输入',pipe_input_val:'任务描述',pipe_classifier:'任务分类',pipe_router:'规则匹配',pipe_router_val:'规则引擎',pipe_execute:'模型执行',pipe_execute_val:'自动选择',pipe_response:'结果输出',pipe_response_val:'主模型',
+model_dist_title:'模型使用统计',recent_reqs_title:'最近请求记录',
+btn_custom_model:'添加自定义模型',btn_custom_model2:'添加自定义模型',btn_refresh:'刷新',btn_add_rule:'添加路由规则',btn_detect:'检测接入状态',btn_execute:'执行',btn_send:'发送',btn_export:'导出配置',btn_import:'导入配置',btn_reload:'重新加载',btn_save:'保存配置',btn_add:'添加',btn_cancel:'取消',btn_add_rule_modal:'添加规则',btn_connect:'一键接入',btn_close:'关闭',
+one_click_title:'一键接入智能体',gateway_label:'网关地址',compat_title:'兼容的智能体与协议',enabled_models_title:'已启用的模型',custom_models_title:'自定义模型',test_routing_title:'路由效果测试',chat_title:'对话测试',config_title:'配置文件 (YAML)',
+router_auto_opt:'router:auto (自动选择)',budget_normal:'资源配额: 标准',budget_high:'资源配额: 充裕',budget_low:'资源配额: 节省',task_placeholder:'请描述您的任务需求，系统将自动识别并路由到最优模型...',chat_placeholder:'请输入消息...',
+modal_custom_title:'添加自定义模型',modal_route_title:'添加路由规则',modal_connect_title:'接入智能体',
+field_model_id:'模型标识符 (ID)',field_display_name:'显示名称',field_provider:'服务提供商',field_api_url:'API 端点地址',field_api_key:'API 访问密钥',field_api_format:'API 协议格式',field_context:'上下文窗口长度',field_gateway_url:'网关地址',field_api_key_opt:'API 密钥（选填）',field_model:'模型',field_rule_name:'规则名称',field_match_domain:'适用领域',field_match_complexity:'任务复杂度',field_target_model:'指定模型',field_effort:'推理深度',
+opt_custom:'自定义',opt_any:'不限',opt_simple:'简单任务',opt_moderate:'中等任务',opt_complex:'复杂任务',opt_very_complex:'高难度任务',opt_select_model:'-- 请选择模型 --',opt_domain_arch:'系统架构',opt_domain_coding:'代码开发',opt_domain_review:'代码审查',opt_domain_testing:'测试',opt_domain_docs:'文档编写',opt_domain_research:'技术调研',opt_domain_data:'数据分析',
+stat_total_requests:'总请求数',stat_success_rate:'成功率',stat_total_tokens:'Token 用量',stat_uptime:'运行时间',stat_sub_session:'当前会话',stat_sub_errors:'次错误',stat_sub_models:'个模型',stat_sub_usd_est:'预估费用 (USD)',
+txt_no_data:'暂无数据',txt_no_requests:'暂无请求记录',txt_no_providers:'尚未加载服务提供商',txt_no_rules:'尚未定义路由规则',txt_no_models:'暂无已启用的模型',txt_no_custom:'暂无自定义模型',txt_no_agents:'未检测到已安装的智能体',
+txt_loading:'加载中...',txt_routing:'正在路由...',txt_configuring:'正在配置智能体...',txt_connected_msg:'接入成功！',txt_failed_load:'加载失败',txt_failed:'操作失败',
+badge_ok:'成功',badge_err:'失败',badge_connected:'已接入',badge_disconnected:'未接入',badge_custom:'自定义',lbl_effort:'推理深度',
+toast_key_saved:'密钥已保存',toast_rule_added:'规则已添加',toast_config_saved:'配置已保存',toast_config_loaded:'配置已载入，请点击保存以生效',toast_model_added:'模型已添加',toast_invalid_json:'JSON 格式错误，请检查语法',toast_enter_name:'请输入规则名称',toast_enter_task:'请输入任务描述',toast_enter_id:'请输入模型标识符',toast_select_model:'请选择目标模型',btn_retry:'重试',btn_del:'删除',btn_connected:'已接入',btn_connecting:'接入中...',txt_env_section:'环境变量',
+nav_sponsor:'赞助支持',page_sponsor:'赞助本项目',sponsor_title:'支持项目持续开发',
+sponsor_desc:'如果这个项目对您有帮助，欢迎赞助支持其持续开发。您的贡献将确保网关始终保持免费和开源。',
+sponsor_wechat:'微信支付',sponsor_wechat_desc:'微信扫码',sponsor_usdt:'USDT (TRC20 / ERC20)',sponsor_usdt_desc:'加密货币转账',
+sponsor_binance:'币安支付',sponsor_binance_desc:'币安 App 扫码',
+sponsor_thanks:'感谢每一份支持！所有赞助者将在项目 README 中致谢。网关始终保持免费和开源。',
+},ja:{
+group_overview:'概要',group_config:'システム設定',group_tools:'ツール',
+nav_dashboard:'ダッシュボード',nav_providers:'プロバイダー',nav_routes:'ルーティング',nav_agents:'エージェント接続',nav_models:'モデル登録',nav_playground:'デバッグ',nav_settings:'設定',
+page_dashboard:'ダッシュボード',page_providers:'プロバイダー設定',page_routes:'ルーティングルール',page_agents:'エージェント接続',page_models:'モデル管理',page_playground:'プレイグラウンド',page_settings:'設定',
+pipeline_title:'ルーティング',pipe_input:'入力',pipe_input_val:'タスク',pipe_classifier:'分類器',pipe_router:'ルーター',pipe_router_val:'エンジン',pipe_execute:'実行',pipe_execute_val:'自動',pipe_response:'応答',pipe_response_val:'編成',
+model_dist_title:'モデル分布',recent_reqs_title:'最近のリクエスト',
+btn_custom_model:'+ カスタム',btn_custom_model2:'+ カスタム',btn_refresh:'更新',btn_add_rule:'+ ルール',btn_detect:'状態',btn_execute:'実行',btn_send:'送信',btn_export:'出力',btn_import:'入力',btn_reload:'再読込',btn_save:'保存',btn_add:'追加',btn_cancel:'取消',btn_add_rule_modal:'追加',btn_connect:'接続',btn_close:'閉',
+one_click_title:'ワンクリック接続',gateway_label:'ゲートウェイ',compat_title:'互換性',enabled_models_title:'有効モデル',custom_models_title:'カスタム',test_routing_title:'テスト',chat_title:'チャット',config_title:'設定 YAML',
+router_auto_opt:'router:auto (自動)',budget_normal:'標準',budget_high:'高',budget_low:'低',task_placeholder:'タスク説明...',chat_placeholder:'入力...',
+modal_custom_title:'+ カスタム',modal_route_title:'ルール追加',modal_connect_title:'接続',
+field_model_id:'ID',field_display_name:'表示名',field_provider:'提供元',field_api_url:'API URL',field_api_key:'APIキー',field_api_format:'形式',field_context:'長さ',field_gateway_url:'GW URL',field_api_key_opt:'キー(任意)',field_model:'モデル',field_rule_name:'ルール名',field_match_domain:'領域',field_match_complexity:'複雑度',field_target_model:'対象',field_effort:'強度',
+opt_custom:'カスタム',opt_any:'全',opt_simple:'簡易',opt_moderate:'中',opt_complex:'複雑',opt_very_complex:'超複雑',opt_select_model:'-- 選択 --',opt_domain_arch:'設計',opt_domain_coding:'開発',opt_domain_review:'査読',opt_domain_testing:'試験',opt_domain_docs:'文書',opt_domain_research:'研究',opt_domain_data:'分析',
+stat_total_requests:'リクエスト',stat_success_rate:'成功率',stat_total_tokens:'トークン',stat_uptime:'稼働',stat_sub_session:'本',stat_sub_errors:'誤',stat_sub_models:'型',stat_sub_usd_est:'USD',
+txt_no_data:'無',txt_no_requests:'無',txt_no_providers:'無',txt_no_rules:'無',txt_no_models:'無',txt_no_custom:'無',txt_no_agents:'無',
+txt_loading:'...',txt_routing:'...',txt_configuring:'...',txt_connected_msg:'完了',txt_failed_load:'失敗',txt_failed:'失敗',
+badge_ok:'OK',badge_err:'ERR',badge_connected:'済',badge_disconnected:'未',badge_custom:'自作',lbl_effort:'強度',
+toast_key_saved:'保存',toast_rule_added:'追加',toast_config_saved:'保存',toast_config_loaded:'読込',toast_model_added:'追加',toast_invalid_json:'無効',toast_enter_name:'名前',toast_enter_task:'内容',toast_enter_id:'ID',toast_select_model:'選択',btn_retry:'再',btn_del:'削',btn_connected:'済',btn_connecting:'中...',txt_env_section:'環境変数',
+},ko:{
+group_overview:'개요',group_config:'시스템 설정',group_tools:'도구',
+nav_dashboard:'대시보드',nav_providers:'제공자',nav_routes:'라우팅 규칙',nav_agents:'에이전트 연결',nav_models:'모델 등록',nav_playground:'디버그',nav_settings:'설정',
+page_dashboard:'대시보드',page_providers:'제공자 설정',page_routes:'라우팅 규칙',page_agents:'에이전트 연결',page_models:'모델 관리',page_playground:'테스트',page_settings:'설정',
+pipeline_title:'라우팅 파이프라인',pipe_input:'입력',pipe_input_val:'작업',pipe_classifier:'분류기',pipe_router:'라우터',pipe_router_val:'엔진',pipe_execute:'실행',pipe_execute_val:'자동',pipe_response:'응답',pipe_response_val:'편성',
+model_dist_title:'모델 분포',recent_reqs_title:'최근 요청',
+btn_custom_model:'+ 사용자',btn_custom_model2:'+ 사용자',btn_refresh:'새로고침',btn_add_rule:'+ 규칙',btn_detect:'감지',btn_execute:'실행',btn_send:'보내기',btn_export:'내보내기',btn_import:'가져오기',btn_reload:'새로고침',btn_save:'저장',btn_add:'추가',btn_cancel:'취소',btn_add_rule_modal:'추가',btn_connect:'연결',btn_close:'닫기',
+one_click_title:'원클릭 연결',gateway_label:'게이트웨이',compat_title:'호환성',enabled_models_title:'활성 모델',custom_models_title:'사용자 모델',test_routing_title:'라우팅 테스트',chat_title:'채팅',config_title:'설정 YAML',
+router_auto_opt:'router:auto (자동)',budget_normal:'보통',budget_high:'높음',budget_low:'낮음',task_placeholder:'작업 설명...',chat_placeholder:'입력...',
+modal_custom_title:'+ 사용자 모델',modal_route_title:'규칙 추가',modal_connect_title:'에이전트 연결',
+field_model_id:'모델 ID',field_display_name:'이름',field_provider:'제공자',field_api_url:'API URL',field_api_key:'API 키',field_api_format:'형식',field_context:'컨텍스트',field_gateway_url:'GW URL',field_api_key_opt:'키(선택)',field_model:'모델',field_rule_name:'규칙명',field_match_domain:'영역',field_match_complexity:'복잡도',field_target_model:'대상',field_effort:'강도',
+opt_custom:'사용자',opt_any:'전체',opt_simple:'단순',opt_moderate:'보통',opt_complex:'복잡',opt_very_complex:'매우',opt_select_model:'-- 선택 --',opt_domain_arch:'설계',opt_domain_coding:'개발',opt_domain_review:'리뷰',opt_domain_testing:'테스트',opt_domain_docs:'문서',opt_domain_research:'연구',opt_domain_data:'분석',
+stat_total_requests:'요청',stat_success_rate:'성공률',stat_total_tokens:'토큰',stat_uptime:'가동',stat_sub_session:'세션',stat_sub_errors:'오류',stat_sub_models:'모델',stat_sub_usd_est:'USD',
+txt_no_data:'없음',txt_no_requests:'없음',txt_no_providers:'없음',txt_no_rules:'없음',txt_no_models:'없음',txt_no_custom:'없음',txt_no_agents:'없음',
+txt_loading:'...',txt_routing:'...',txt_configuring:'...',txt_connected_msg:'완료',txt_failed_load:'실패',txt_failed:'실패',
+badge_ok:'성공',badge_err:'오류',badge_connected:'연결됨',badge_disconnected:'안됨',badge_custom:'사용자',lbl_effort:'강도',
+toast_key_saved:'저장됨',toast_rule_added:'추가됨',toast_config_saved:'저장됨',toast_config_loaded:'로드됨',toast_model_added:'추가됨',toast_invalid_json:'오류',toast_enter_name:'이름',toast_enter_task:'내용',toast_enter_id:'ID',toast_select_model:'선택',btn_retry:'재시도',btn_del:'삭제',btn_connected:'연결됨',btn_connecting:'중...',txt_env_section:'환경변수',
+},fr:{
+group_overview:'Aperçu',group_config:'Configuration',group_tools:'Outils',
+nav_dashboard:'Tableau de bord',nav_providers:'Fournisseurs',nav_routes:'Routage',nav_agents:'Connexion agent',nav_models:'Registre',nav_playground:'Débogage',nav_settings:'Paramètres',
+page_dashboard:'Tableau de bord',page_providers:'Fournisseurs',page_routes:'Règles de routage',page_agents:'Connexion agent',page_models:'Registre',page_playground:'Labo',page_settings:'Paramètres',
+pipeline_title:'Pipeline',pipe_input:'Entrée',pipe_input_val:'Tâche',pipe_classifier:'Classeur',pipe_router:'Routeur',pipe_router_val:'Moteur',pipe_execute:'Exécution',pipe_execute_val:'Auto',pipe_response:'Réponse',pipe_response_val:'Orch',
+model_dist_title:'Distribution',recent_reqs_title:'Récent',
+btn_custom_model:'+ Modèle',btn_custom_model2:'+ Modèle',btn_refresh:'Actualiser',btn_add_rule:'+ Règle',btn_detect:'Détecter',btn_execute:'Exécuter',btn_send:'Envoyer',btn_export:'Exporter',btn_import:'Importer',btn_reload:'Recharger',btn_save:'Enregistrer',btn_add:'Ajouter',btn_cancel:'Annuler',btn_add_rule_modal:'Ajouter',btn_connect:'Connecter',btn_close:'Fermer',
+one_click_title:'Connexion 1-clic',gateway_label:'Passerelle',compat_title:'Référence',enabled_models_title:'Activés',custom_models_title:'Perso',test_routing_title:'Test',chat_title:'Chat',config_title:'Config YAML',
+router_auto_opt:'router:auto (auto)',budget_normal:'Normal',budget_high:'Élevé',budget_low:'Bas',task_placeholder:'Décrivez...',chat_placeholder:'Écrivez...',
+modal_custom_title:'+ Modèle',modal_route_title:'Ajouter règle',modal_connect_title:'Connecter',
+field_model_id:'ID',field_display_name:'Nom',field_provider:'Fournisseur',field_api_url:'URL API',field_api_key:'Clé',field_api_format:'Format',field_context:'Contexte',field_gateway_url:'URL GW',field_api_key_opt:'Clé(opt)',field_model:'Modèle',field_rule_name:'Nom',field_match_domain:'Domaine',field_match_complexity:'Complexité',field_target_model:'Cible',field_effort:'Effort',
+opt_custom:'Perso',opt_any:'Tout',opt_simple:'Simple',opt_moderate:'Modéré',opt_complex:'Complexe',opt_very_complex:'Très',opt_select_model:'-- Select --',opt_domain_arch:'Architecture',opt_domain_coding:'Codage',opt_domain_review:'Revue',opt_domain_testing:'Tests',opt_domain_docs:'Documentation',opt_domain_research:'Recherche',opt_domain_data:'Analyse',
+stat_total_requests:'Requêtes',stat_success_rate:'Succès',stat_total_tokens:'Tokens',stat_uptime:'Dispo',stat_sub_session:'session',stat_sub_errors:'erreurs',stat_sub_models:'modèles',stat_sub_usd_est:'USD',
+txt_no_data:'Aucun',txt_no_requests:'Aucun',txt_no_providers:'Aucun',txt_no_rules:'Aucun',txt_no_models:'Aucun',txt_no_custom:'Aucun',txt_no_agents:'Aucun',
+txt_loading:'...',txt_routing:'...',txt_configuring:'...',txt_connected_msg:'OK',txt_failed_load:'Échec',txt_failed:'Échec',
+badge_ok:'OK',badge_err:'ERR',badge_connected:'OK',badge_disconnected:'NON',badge_custom:'Perso',lbl_effort:'effort',
+toast_key_saved:'sauvé',toast_rule_added:'ajouté',toast_config_saved:'sauvé',toast_config_loaded:'chargé',toast_model_added:'ajouté',toast_invalid_json:'Invalide',toast_enter_name:'Nom',toast_enter_task:'Tâche',toast_enter_id:'ID',toast_select_model:'Modèle',btn_retry:'Retry',btn_del:'Suppr',btn_connected:'OK',btn_connecting:'...',txt_env_section:'Env',
+}};
+
+let curLang='en';
+function t(k,p){var tx=(LOCALES[curLang]||LOCALES.en)[k];if(tx===undefined)tx=k;if(p)Object.keys(p).forEach(function(k){tx=tx.replace('{'+k+'}',p[k])});return tx}
+function switchLang(l){curLang=l;try{localStorage.setItem('mrouter-lang',l)}catch(e){}document.documentElement.lang=l;applyI18n();refreshStats()}
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(function(el){el.textContent=t(el.getAttribute('data-i18n'))});
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el){el.placeholder=t(el.getAttribute('data-i18n-placeholder'))});
+  var pgB=document.getElementById('pg-budget');if(pgB){pgB.options[0].text=t('budget_normal');pgB.options[1].text=t('budget_high');pgB.options[2].text=t('budget_low')}
+}
+
+// ══════════ THEME ══════════
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);document.querySelectorAll('.t-dot').forEach(function(d){d.classList.toggle('active',d.dataset.t===t)});try{localStorage.setItem('mrouter-theme',t)}catch(e){}}
+
+// ══════════ STATE ══════════
+const API='';let allProviders={},currentAgentId='';
+
+// ══════════ INIT ══════════
+(function(){
+  // Theme
+  var st=null;try{st=localStorage.getItem('mrouter-theme')}catch(e){}setTheme(st||'industrial');
+  // Lang
+  var sl='en';try{sl=localStorage.getItem('mrouter-lang')||navigator.language}catch(e){}
+  if(sl&&sl.startsWith('zh'))sl='zh-CN';else if(sl&&sl.startsWith('ja'))sl='ja';else if(sl&&sl.startsWith('ko'))sl='ko';else if(sl&&sl.startsWith('fr'))sl='fr';else sl='en';
+  if(!LOCALES[sl])sl='en';curLang=sl;
+  var sel=document.getElementById('lang-switcher');sel.innerHTML='<option value="en">English</option><option value="zh-CN">中文</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="fr">Français</option>';sel.value=sl;
+  applyI18n();
+  setInterval(function(){var l=sl==='zh-CN'?'zh-CN':sl==='ja'?'ja-JP':sl==='ko'?'ko-KR':sl==='fr'?'fr-FR':'en-US';document.getElementById('dash-clock').textContent=new Date().toLocaleString(l,{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})},1000);
+  refreshStats();setInterval(refreshStats,30000);
+})();
+
+// ══════════ HELPERS ══════════
+function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function fmtDur(s){if(s<60)return Math.floor(s)+'s';if(s<3600)return Math.floor(s/60)+'m '+Math.floor(s%60)+'s';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m'}
+function animateCount(id,s,e,d){var el=document.getElementById(id);if(!el)return;var st=Date.now();function tick(){var p=Math.min((Date.now()-st)/d,1);el.textContent=Math.round(s+(e-s)*(p<0.5?2*p*p:-1+(4-2*p)*p));if(p<1)requestAnimationFrame(tick)}tick()}
+async function api(url,opt){var r=await fetch(API+url,opt);if(!r.ok){var tx=await r.text();throw new Error(tx)}return r.json()}
+function navTo(p){
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active')});
+  document.querySelectorAll('.nav-item').forEach(function(x){x.classList.remove('active')});
+  var pg=document.getElementById('page-'+p);if(pg)pg.classList.add('active');
+  var nv=document.querySelector('[data-page="'+p+'"]');if(nv)nv.classList.add('active');
+  if(p==='dashboard')refreshStats();if(p==='providers')loadProviders();if(p==='routes')loadRoutes();
+  if(p==='agents'){loadAgents();checkAgentStatus()}if(p==='models')loadModelsPanel();
+  if(p==='playground')populateModelDropdowns();if(p==='settings')loadConfigEditor();
+}
+function toast(m,t){var d=document.createElement('div');d.className='toast '+(t||'ok');d.textContent=m;document.getElementById('toasts').appendChild(d);setTimeout(function(){d.remove()},3000)}
+
+// ══════════ DASHBOARD ══════════
+async function refreshStats(){
+  try{
+    var d=await api('/api/stats'),sr=d.total_requests>0?Math.round((1-d.total_errors/d.total_requests)*100):100;
+    document.getElementById('stats-grid').innerHTML=
+      '<div class="stat-card"><div class="stat-label">'+t('stat_total_requests')+'</div><div class="stat-value" style="color:var(--accent)" id="cnt-req">0</div><div class="stat-sub">+0 '+t('stat_sub_session')+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">'+t('stat_success_rate')+'</div><div class="stat-value" style="color:var(--success)" id="cnt-suc">'+sr+'%</div><div class="stat-sub">'+d.total_errors+' '+t('stat_sub_errors')+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">'+t('stat_total_tokens')+'</div><div class="stat-value" style="color:var(--purple)" id="cnt-tok">0</div><div class="stat-sub">~'+((d.total_tokens*0.000003).toFixed(2))+' '+t('stat_sub_usd_est')+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">'+t('stat_uptime')+'</div><div class="stat-value" style="color:var(--warning)">'+fmtDur(d.uptime_seconds)+'</div><div class="stat-sub">'+Object.keys(d.model_distribution||{}).length+' '+t('stat_sub_models')+'</div></div>';
+    animateCount('cnt-req',0,d.total_requests,800);animateCount('cnt-tok',0,Math.round(d.total_tokens/1000),800);
+    var dist=d.model_distribution||{};
+    document.getElementById('model-dist').innerHTML=Object.entries(dist).length?Object.entries(dist).map(function(e){return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:10px"><span>'+e[0]+'</span><span class="tag tag-accent">'+e[1]+'</span></div>'}).join(''):'<div style="color:var(--text-tertiary);padding:8px;font-family:var(--font-mono);font-size:10px">'+t('txt_no_data')+'</div>';
+    var recent=d.recent_requests||[];
+    document.getElementById('recent-reqs').innerHTML=recent.length?recent.reverse().slice(0,15).map(function(r){return '<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:10px"><span class="tag '+(r.success?'tag-ok':'tag-err')+'">'+(r.success?t('badge_ok'):t('badge_err'))+'</span> <span class="tag tag-accent" style="margin:0 4px">'+r.model+'</span> '+esc(r.task||'').slice(0,40)+' <span style="float:right;color:var(--text-tertiary);font-family:var(--font-mono)">'+Math.round(r.elapsed_ms||0)+'ms</span></div>'}).join(''):'<div style="color:var(--text-tertiary);padding:8px;font-family:var(--font-mono);font-size:10px">'+t('txt_no_requests')+'</div>';
+  }catch(e){console.error(e)}
+}
+
+// ══════════ PROVIDERS ══════════
+async function loadProviders(){
+  try{
+    allProviders=await api('/api/providers');var reg={};
+    Object.entries(allProviders).forEach(function(e){var r=e[1].region||'Other';if(!reg[r])reg[r]=[];reg[r].push({id:e[0],d:e[1]})});
+    var html='';['International','China','Local'].forEach(function(rn){
+      var items=reg[Object.keys(reg).find(function(k){return k.indexOf(rn)>=0})||rn];if(!items||!items.length)return;
+      html+='<div class="section-label">'+rn+'</div>';
+      items.forEach(function(item){var id=item.id,d=item.d,models=d.models||[];var ms=models.map(function(m){return '<code style="font-size:9px">'+m.id+'</code>'}).join(' ')||'<span style="color:var(--text-tertiary)">--</span>';html+='<div class="row"><span class="row-name">'+d.name+'</span><span class="row-models">'+ms+'</span><span style="width:140px"><input type="password" id="key-'+id+'" placeholder="API Key" value="'+(d.has_key?'••••••••':'')+'" style="padding:3px 6px;font-size:10px"></span><button class="btn btn-primary btn-xs" onclick="saveProviderKey(\''+id+'\')">Save</button><label class="toggle"><input type="checkbox" '+(d.enabled?'checked':'')+' onchange="toggleProvider(\''+id+'\',this.checked)"><span class="slider"></span></label></div>'})});
+    document.getElementById('provider-list').innerHTML=html||'<div style="padding:20px;color:var(--text-tertiary);text-align:center;font-family:var(--font-mono)">'+t('txt_no_providers')+'</div>';
+    populateModelDropdowns();
+  }catch(e){document.getElementById('provider-list').innerHTML='<div style="padding:20px;color:var(--danger)">'+t('txt_failed_load')+': '+esc(e+'')+'</div>'}
+}
+async function saveProviderKey(pid){var k=document.getElementById('key-'+pid).value;if(!k&&!confirm('Clear?'))return;try{await api('/api/providers/'+pid+'/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:k})});toast(pid+' '+t('toast_key_saved'))}catch(e){toast(t('txt_failed'),'err')}}
+async function toggleProvider(pid,en){try{await api('/api/providers/'+pid+'/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:en})});populateModelDropdowns()}catch(e){}}
+
+// ══════════ MODEL DROPDOWNS ══════════
+async function populateModelDropdowns(){
+  var provs=allProviders;if(!Object.keys(provs).length)provs=await api('/api/providers');var all=[];Object.entries(provs).forEach(function(e){e[1].models.forEach(function(m){all.push({id:m.id,name:m.name||m.id,provider:e[1].name,enabled:e[1].enabled})})});try{var c=await api('/api/custom-models');c.models.forEach(function(m){all.push({id:m.id,name:m.name,provider:t('badge_custom'),enabled:true})})}catch(e){};
+  ['ar-model','pg-force-model'].forEach(function(sid){var sel=document.getElementById(sid);if(!sel)return;var cur=sel.value;sel.innerHTML='<option value="">'+t('router_auto_opt')+'</option>';var grps={};all.forEach(function(m){var g=m.enabled?m.provider:'-- Disabled';if(!grps[g])grps[g]=[];grps[g].push(m)});Object.keys(grps).sort().forEach(function(g){sel.innerHTML+='<optgroup label="'+g+'"'+(g.startsWith('--')?' disabled':'')+'>';grps[g].forEach(function(m){sel.innerHTML+='<option value="'+m.id+'"'+(m.id===cur?' selected':'')+'>'+m.name+'</option>'});sel.innerHTML+='</optgroup>'})});
+}
+
+// ══════════ ROUTES ══════════
+async function loadRoutes(){try{var c=await api('/api/config'),rules=c.routing?.rules||[];document.getElementById('route-list').innerHTML=rules.map(function(r,i){var m=r.match||{},rt=r.route||{};return '<div class="row"><span style="font-family:var(--font-mono);color:var(--accent);min-width:24px;font-size:10px">#'+(i+1)+'</span><span style="font-weight:600;min-width:140px;font-size:11px">'+r.name+'</span><span class="tag tag-accent">'+(m.domain||'*')+'</span>'+(m.complexity?'<span class="tag tag-warn">'+m.complexity+'</span>':'')+'<span class="tag" style="margin-left:auto;color:var(--purple)">'+rt.model+'</span><span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);margin:0 4px">'+t('lbl_effort')+':'+(rt.effort||'high')+'</span><button class="btn btn-danger btn-xs" onclick="deleteRoute('+i+')">'+t('btn_del')+'</button></div>'}).join('')||'<div style="padding:16px;color:var(--text-tertiary);text-align:center;font-family:var(--font-mono)">'+t('txt_no_rules')+'</div>'}catch(e){}}
+function openRouteModal(){populateModelDropdowns();['ar-name','ar-domain','ar-complexity'].forEach(function(id){document.getElementById(id).value=''});document.getElementById('ar-effort').value='high';openModal('modal-route')}
+async function addRouteFromModal(){var name=document.getElementById('ar-name').value.trim();if(!name){toast(t('toast_enter_name'),'err');return}var domain=document.getElementById('ar-domain').value,comp=document.getElementById('ar-complexity').value,model=document.getElementById('ar-model').value;if(!model){toast(t('toast_select_model'),'err');return}var effort=document.getElementById('ar-effort').value||'high';try{var c=await api('/api/config'),rules=c.routing?.rules||[];rules.push({name:name,priority:(rules.length+1)*10,match:{domain:domain||undefined,complexity:comp||undefined},route:{model:model,effort:effort}});await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(c)});closeModal('modal-route');loadRoutes();toast(t('toast_rule_added')+': '+name)}catch(e){toast(t('txt_failed'),'err')}}
+async function deleteRoute(i){if(!confirm('Delete?'))return;try{var c=await api('/api/config');c.routing.rules.splice(i,1);await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(c)});loadRoutes()}catch(e){}}
+
+// ══════════ AGENTS ══════════
+async function loadAgents(){try{var d=await api('/api/agents');document.getElementById('agent-compat').innerHTML=d.agents.map(function(cat){return '<div class="section-label">'+cat.category+'</div>'+cat.agents.map(function(a){return '<div style="padding:4px 8px;font-size:10px;border-bottom:1px solid var(--border)"><strong>'+a.name+'</strong> <span class="tag tag-accent">'+a.protocol+'</span> <code style="font-size:9px">'+a.base_url+'</code> <span style="color:var(--text-tertiary)">'+a.note+'</span></div>'}).join('')}).join('')}catch(e){}}
+async function checkAgentStatus(){try{var d=await api('/api/agents/connect/status');document.getElementById('gw-url').textContent=d.gateway_url;var agents=d.agents,html='';['claude-code','codex','openclaw','hermes','opencode','gemini-cli','aider','cursor'].forEach(function(aid){var a=agents[aid];if(!a)return;var ok=a.connected;html+='<div class="row"><span style="width:7px;height:7px;border-radius:50%;background:'+(ok?'var(--success)':'var(--text-tertiary)')+';box-shadow:'+(ok?'var(--glow-success)':'none')+'"></span><span class="row-name" style="min-width:110px">'+a.name+'</span><span class="tag '+(ok?'tag-ok':'tag-warn')+'">'+(ok?t('badge_connected'):t('badge_disconnected'))+'</span><span style="flex:1;font-size:9px;color:var(--text-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono)" title="'+esc(a.config_path)+'">'+esc(a.config_path)+'</span><button class="btn btn-primary btn-xs" onclick="openAgentConnect(\''+aid+'\')">Connect</button></div>'});document.getElementById('agent-connect-list').innerHTML=html||'<div style="padding:12px;color:var(--text-tertiary);font-family:var(--font-mono)">'+t('txt_no_agents')+'</div>'}catch(e){}}
+function openAgentConnect(aid){currentAgentId=aid;var names={'claude-code':'Claude Code','codex':'Codex CLI','openclaw':'OpenClaw','hermes':'Hermes Agent','opencode':'OpenCode','gemini-cli':'Gemini CLI','aider':'Aider','cursor':'Cursor'};document.getElementById('acm-title').textContent=t('modal_connect_title')+': '+(names[aid]||aid);document.getElementById('acm-result').style.display='none';document.getElementById('acm-btn').textContent=t('btn_connect');document.getElementById('acm-btn').disabled=false;openModal('modal-agent-connect')}
+async function doAgentConnect(){if(!currentAgentId)return;var url=document.getElementById('acm-url').value.trim()||'http://localhost:8701',key=document.getElementById('acm-key').value.trim()||'router-key',model=document.getElementById('acm-model').value.trim()||'router:auto',btn=document.getElementById('acm-btn'),rd=document.getElementById('acm-result');btn.disabled=true;btn.textContent=t('btn_connecting');rd.style.display='block';rd.innerHTML='<span style="color:var(--text-secondary)">'+t('txt_configuring')+'</span>';try{var d=await api('/api/agents/connect/'+currentAgentId,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base_url:url,api_key:key,model:model})});var h='<div style="color:var(--success);font-weight:600;margin-bottom:8px">'+t('txt_connected_msg')+'</div>';d.actions.forEach(function(a){h+='<div style="color:var(--text-secondary)">'+a+'</div>'});if(Object.keys(d.env_exports||{}).length){h+='<div style="margin-top:8px;color:var(--accent)">'+t('txt_env_section')+':</div><div style="background:var(--bg-primary);padding:6px;border-radius:3px;margin-top:4px">';Object.entries(d.env_exports).forEach(function(e){h+='<code>$env:'+e[0]+' = "'+e[1]+'"</code><br>'});h+='</div>'}rd.innerHTML=h;btn.textContent=t('btn_connected');setTimeout(checkAgentStatus,1000)}catch(e){rd.innerHTML='<div style="color:var(--danger)">'+t('txt_failed')+': '+esc(e+'')+'</div>';btn.disabled=false;btn.textContent=t('btn_retry')}}
+
+// ══════════ MODELS ══════════
+async function loadModelsPanel(){try{var p=await api('/api/providers'),h='';Object.entries(p).forEach(function(e){if(e[1].enabled&&e[1].models.length)h+='<div style="margin-bottom:6px;font-size:11px"><strong>'+e[1].name+'</strong>: '+e[1].models.map(function(m){return '<span class="tag tag-accent">'+m.id+'</span>'}).join(' ')+'</div>'});document.getElementById('enabled-models').innerHTML=h||'<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:10px">'+t('txt_no_models')+'</span>';var c=await api('/api/custom-models');document.getElementById('custom-models').innerHTML=c.models.length?c.models.map(function(m){return '<div class="row"><span class="tag tag-warn">'+t('badge_custom')+'</span><strong>'+m.name+'</strong><code style="font-size:9px;color:var(--text-secondary)">'+m.id+'</code><button class="btn btn-danger btn-xs" style="margin-left:auto" onclick="deleteCustom(\''+m.id+'\')">'+t('btn_del')+'</button></div>'}).join(''):'<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:10px">'+t('txt_no_custom')+'</span>'}catch(e){}}
+function showAddModelModal(){var s=document.getElementById('am-provider');s.innerHTML='<option value="custom">'+t('opt_custom')+'</option>';Object.entries(allProviders).forEach(function(e){s.innerHTML+='<option value="'+e[0]+'">'+e[1].name+'</option>'});openModal('modal-custom-model')}
+async function addCustomModel(){var d={id:document.getElementById('am-id').value,name:document.getElementById('am-name').value,provider:document.getElementById('am-provider').value,base_url:document.getElementById('am-url').value,api_format:document.getElementById('am-format').value,context_window:parseInt(document.getElementById('am-ctx').value)||128000};if(!d.id){toast(t('toast_enter_id'),'err');return}if(d.provider!=='custom'){var k=document.getElementById('am-key').value;if(k)await saveProviderKey(d.provider)}try{await api('/api/custom-models',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});closeModal('modal-custom-model');loadModelsPanel();populateModelDropdowns();toast(t('toast_model_added'))}catch(e){toast(t('txt_failed'),'err')}}
+async function deleteCustom(mid){try{await api('/api/custom-models/'+mid,{method:'DELETE'});loadModelsPanel();populateModelDropdowns()}catch(e){}}
+
+// ══════════ PLAYGROUND ══════════
+async function playgroundRoute(){var task=document.getElementById('pg-task').value.trim();if(!task){toast(t('toast_enter_task'),'err');return}var fm=document.getElementById('pg-force-model').value,budget=document.getElementById('pg-budget').value,rd=document.getElementById('pg-result');rd.style.display='block';rd.innerHTML='<span style="color:var(--text-tertiary);font-family:var(--font-mono)">'+t('txt_routing')+'</span>';try{var body={task:task,budget:budget};if(fm)body.force_model=fm;var d=await api('/api/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});document.getElementById('pipe-model-name').textContent=d.model||'?';rd.innerHTML='<div style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"><span class="tag tag-accent" style="font-size:12px">'+d.model+'</span><span class="tag">'+d.task_type+'</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary)">'+Math.round(d.elapsed_ms||0)+'ms | '+(d.usage?.total_tokens||0)+' tok</span></div><div style="line-height:1.7">'+esc(d.output||'')+'</div>'}catch(e){rd.innerHTML='<span style="color:var(--danger)">'+t('txt_failed')+': '+esc(e+'')+'</span>'}}
+async function chatSend(){var inp=document.getElementById('chat-input'),task=inp.value.trim();if(!task)return;var z=document.getElementById('chat-zone');z.innerHTML+='<div class="chat-msg user">'+esc(task)+'</div>';inp.value='';z.scrollTop=z.scrollHeight;try{var d=await api('/api/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:task})});z.innerHTML+='<div class="chat-msg assistant"><span style="font-size:9px;color:var(--accent);font-family:var(--font-mono)">['+d.model+']</span><br>'+esc(d.output||'')+'</div>';z.scrollTop=z.scrollHeight}catch(e){z.innerHTML+='<div class="chat-msg assistant" style="color:var(--danger)">'+t('txt_failed')+'</div>'}}
+
+// ══════════ SETTINGS ══════════
+async function loadConfigEditor(){try{var c=await api('/api/config');document.getElementById('cfg-editor').value=JSON.stringify(c,null,2)}catch(e){}}
+async function saveFullConfig(){try{var c=JSON.parse(document.getElementById('cfg-editor').value);await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(c)});toast(t('toast_config_saved'))}catch(e){toast(t('toast_invalid_json'),'err')}}
+function exportConfig(){var b=new Blob([document.getElementById('cfg-editor').value],{type:'application/x-yaml'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='model-router-config.yaml';a.click();URL.revokeObjectURL(u)}
+function importConfig(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){document.getElementById('cfg-editor').value=ev.target.result;toast(t('toast_config_loaded'))};r.readAsText(f)}
+function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}
+</script>
+</body>
+</html>

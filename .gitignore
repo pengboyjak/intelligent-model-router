@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.spec
+*.exe
+*.msi
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Gateway runtime
+/tmp/
+*.log
+nohup.out
+
+# Config backups
+*.bak
+configs/custom*.yaml
+
+# Secrets (never commit!)
+.env
+*.key
+secrets.yaml

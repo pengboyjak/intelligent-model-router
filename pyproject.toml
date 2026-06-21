@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "intelligent-model-router"
+version = "2.4.0"
+description = "Provider-Agnostic, Agent-Agnostic Intelligent Model Router Gateway — 智能模型路由网关"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Model Router Team"}]
+keywords = ["llm", "router", "gateway", "ai", "multi-provider", "agent", "orchestration"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.45.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24.0", "pyinstaller>=6.0"]
+all = ["openai>=1.0", "google-genai>=1.0"]
+
+[project.urls]
+Homepage = "https://github.com/bpeng亮/intelligent-model-router"
+Repository = "https://github.com/bpeng亮/intelligent-model-router"
+Issues = "https://github.com/bpeng亮/intelligent-model-router/issues"
+
+[project.scripts]
+model-router = "gateway:main"
+mrouter = "gateway:main"
+
+[tool.setuptools]
+packages = []
+
+[tool.pyinstaller]
+name = "ModelRouter"
+icon = "static/assets/icon.ico"
+console = true
+onefile = true
+add_data = ["config.yaml;.", "static;static"]
+hidden_imports = ["anthropic", "fastapi", "uvicorn", "httpx", "yaml"]

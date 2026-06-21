@@ -1,0 +1,366 @@
+# ============================================================
+# Intelligent Model Router v2.0 — 统一多提供商配置
+# ============================================================
+# 适用于: 任何模型配置、任何智能体配置、可视化配置
+# 支持: OpenAI, Anthropic, Google, DeepSeek, xAI, Ollama, OpenRouter
+# ============================================================
+
+version: "2.0"
+
+# ============================================================
+# 一、提供商配置 (Provider Configuration)
+# ============================================================
+providers:
+  openai:
+    enabled: true
+    base_url: "https://api.openai.com/v1"
+    models:
+      - id: "gpt-5"
+        display_name: "GPT-5"
+        context_window: 256000
+        max_output: 128000
+        capabilities: ["coding", "reasoning", "vision", "multilingual"]
+        cost_per_1m_input: 2.50
+        cost_per_1m_output: 5.00
+      - id: "gpt-4o"
+        display_name: "GPT-4o"
+        context_window: 128000
+        max_output: 16384
+        capabilities: ["coding", "vision", "multilingual"]
+        cost_per_1m_input: 2.50
+        cost_per_1m_output: 10.00
+      - id: "gpt-4o-mini"
+        display_name: "GPT-4o Mini"
+        context_window: 128000
+        max_output: 16384
+        capabilities: ["coding", "fast"]
+        cost_per_1m_input: 0.15
+        cost_per_1m_output: 0.60
+      - id: "o4"
+        display_name: "o4"
+        context_window: 200000
+        max_output: 100000
+        capabilities: ["reasoning", "math", "science"]
+        cost_per_1m_input: 5.00
+        cost_per_1m_output: 20.00
+
+  anthropic:
+    enabled: true
+    base_url: "https://api.anthropic.com/v1"
+    models:
+      - id: "claude-opus-4-7"
+        display_name: "Claude Opus 4.7"
+        context_window: 1000000
+        max_output: 128000
+        capabilities: ["coding", "reasoning", "vision", "analysis", "architecture"]
+        thinking: "adaptive"
+        cost_per_1m_input: 15.00
+        cost_per_1m_output: 75.00
+      - id: "claude-sonnet-4-6"
+        display_name: "Claude Sonnet 4.6"
+        context_window: 1000000
+        max_output: 64000
+        capabilities: ["coding", "reasoning", "vision"]
+        thinking: "adaptive"
+        cost_per_1m_input: 3.00
+        cost_per_1m_output: 15.00
+      - id: "claude-haiku-4-5"
+        display_name: "Claude Haiku 4.5"
+        context_window: 200000
+        max_output: 32000
+        capabilities: ["coding", "fast"]
+        cost_per_1m_input: 0.80
+        cost_per_1m_output: 4.00
+
+  google:
+    enabled: false
+    base_url: "https://generativelanguage.googleapis.com/v1beta"
+    models:
+      - id: "gemini-2.5-pro"
+        display_name: "Gemini 2.5 Pro"
+        context_window: 2000000
+        max_output: 65536
+        capabilities: ["coding", "reasoning", "vision", "multimodal"]
+        cost_per_1m_input: 1.25
+        cost_per_1m_output: 10.00
+      - id: "gemini-2.5-flash"
+        display_name: "Gemini 2.5 Flash"
+        context_window: 1000000
+        max_output: 65536
+        capabilities: ["coding", "vision", "fast"]
+        cost_per_1m_input: 0.15
+        cost_per_1m_output: 0.60
+
+  deepseek:
+    enabled: false
+    base_url: "https://api.deepseek.com/v1"
+    models:
+      - id: "deepseek-v4"
+        display_name: "DeepSeek V4"
+        context_window: 256000
+        max_output: 32000
+        capabilities: ["coding", "reasoning", "math"]
+        cost_per_1m_input: 0.27
+        cost_per_1m_output: 0.55
+      - id: "deepseek-r1"
+        display_name: "DeepSeek R1"
+        context_window: 128000
+        max_output: 32000
+        capabilities: ["reasoning", "math", "science"]
+        cost_per_1m_input: 0.55
+        cost_per_1m_output: 2.19
+
+  xai:
+    enabled: false
+    base_url: "https://api.x.ai/v1"
+    models:
+      - id: "grok-4"
+        display_name: "Grok 4"
+        context_window: 1000000
+        max_output: 64000
+        capabilities: ["coding", "reasoning", "vision"]
+        cost_per_1m_input: 5.00
+        cost_per_1m_output: 20.00
+
+  openrouter:
+    enabled: false
+    base_url: "https://openrouter.ai/api/v1"
+    models: []  # 动态发现 400+ 模型
+
+  ollama:
+    enabled: false
+    base_url: "http://localhost:11434/v1"
+    models: []  # 本地模型动态发现
+
+# ============================================================
+# 二、路由策略 (Routing Strategy)
+# ============================================================
+routing:
+  # 路由策略: rule_based | ml_based | cost_optimized | latency_optimized
+  strategy: "rule_based"
+
+  # 分类器模型 (用于任务类型识别，使用轻量快速模型)
+  classifier_model: "claude-haiku-4-5"
+  classifier_provider: "anthropic"
+
+  # 默认模型 (当路由规则无法匹配时使用)
+  default_model: "claude-opus-4-7"
+  default_effort: "high"
+
+  # 路由规则 (优先级从高到低，首次命中即停止)
+  rules:
+    # ---- 最高优先级: 架构设计 ----
+    - name: "architecture_design"
+      priority: 100
+      match:
+        domain: "architecture"
+        complexity: ["complex", "very_complex"]
+      route:
+        model: "claude-opus-4-7"       # 可改为 "gpt-5" 或 "gemini-2.5-pro"
+        effort: "max"
+        thinking: "adaptive"
+
+    # ---- 安全审计 ----
+    - name: "security_audit"
+      priority: 95
+      match:
+        domain: "review"
+        tags: ["security", "auth", "vulnerability", "exploit"]
+      route:
+        model: "claude-opus-4-7"
+        effort: "max"
+
+    # ---- 代码审查 ----
+    - name: "code_review"
+      priority: 90
+      match:
+        domain: "review"
+      route:
+        model: "claude-opus-4-7"
+        effort: "high"
+
+    # ---- 复杂编码 ----
+    - name: "complex_coding"
+      priority: 80
+      match:
+        domain: "coding"
+        complexity: ["complex", "very_complex"]
+      route:
+        model: "claude-opus-4-7"
+        effort: "high"
+
+    # ---- 中等编码 ----
+    - name: "moderate_coding"
+      priority: 70
+      match:
+        domain: "coding"
+        complexity: "moderate"
+      route:
+        model: "claude-sonnet-4-6"
+        effort: "high"
+
+    # ---- 数据分析 (复杂) ----
+    - name: "complex_data_analysis"
+      priority: 75
+      match:
+        domain: "data_analysis"
+        complexity: ["complex", "very_complex"]
+      route:
+        model: "claude-opus-4-7"
+        effort: "high"
+
+    # ---- 测试 ----
+    - name: "testing"
+      priority: 60
+      match:
+        domain: "testing"
+      route:
+        model: "claude-sonnet-4-6"
+        effort: "medium"
+
+    # ---- 文档 ----
+    - name: "documentation"
+      priority: 60
+      match:
+        domain: "docs"
+      route:
+        model: "claude-sonnet-4-6"
+        effort: "medium"
+
+    # ---- 研究搜索 ----
+    - name: "research"
+      priority: 60
+      match:
+        domain: "research"
+      route:
+        model: "claude-sonnet-4-6"
+        effort: "high"
+
+    # ---- 简单任务 ----
+    - name: "simple_task"
+      priority: 50
+      match:
+        complexity: "simple"
+      route:
+        model: "claude-haiku-4-5"
+        effort: "low"
+
+    # ---- 对话 ----
+    - name: "conversation"
+      priority: 40
+      match:
+        domain: "conversation"
+      route:
+        model: "claude-sonnet-4-6"
+        effort: "medium"
+
+    # ---- 兜底默认 ----
+    - name: "fallback_default"
+      priority: 0
+      match: {}
+      route:
+        model: "claude-opus-4-7"
+        effort: "high"
+
+# ============================================================
+# 三、预算与成本控制 (Budget & Cost)
+# ============================================================
+budget:
+  strategies:
+    high:
+      description: "不限制成本，追求最高质量"
+      model_upgrade: true
+      effort_upgrade: true
+    normal:
+      description: "平衡质量与成本 (默认)"
+      model_upgrade: false
+      effort_upgrade: false
+    low:
+      description: "严格控制成本"
+      model_downgrade: true
+      effort_downgrade: true
+      prefer_cheapest: true
+
+  # 月度预算上限 (USD, 0 表示不限)
+  monthly_cap_usd: 0
+
+  # 单次请求最大成本 (USD)
+  max_per_request_usd: 5.0
+
+# ============================================================
+# 四、故障转移与弹性 (Failover & Resilience)
+# ============================================================
+failover:
+  enabled: true
+  # 故障转移链: 主模型失败后依次尝试
+  chains:
+    - name: "claude_fallback"
+      primary: ["claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5"]
+    - name: "cross_provider"
+      primary: ["claude-opus-4-7"]
+      fallback: ["gpt-5", "gemini-2.5-pro"]
+
+  # 重试配置
+  retry:
+    max_attempts: 3
+    backoff_ms: 1000
+    max_backoff_ms: 30000
+
+  # 熔断配置
+  circuit_breaker:
+    failure_threshold: 5
+    cooldown_seconds: 60
+
+# ============================================================
+# 五、并行与并发 (Parallelism)
+# ============================================================
+parallel:
+  max_concurrent_requests: 16
+  default_timeout_seconds: 300
+  max_timeout_seconds: 600
+
+# ============================================================
+# 六、智能体配置 (Agent Configuration)
+# ============================================================
+agents:
+  # 预定义的智能体模板
+  templates:
+    code_reviewer:
+      framework: "any"            # any | langchain | crewai | autogen
+      model_strategy: "router:auto"
+      system_prompt: "你是一个资深代码审查专家，专注于安全、性能和代码质量"
+      budget: "normal"
+
+    architect:
+      framework: "any"
+      model_strategy: "router:auto"
+      system_prompt: "你是一个系统架构师，设计可扩展、高可用的系统"
+      budget: "high"
+
+    fast_coder:
+      framework: "any"
+      model_strategy: "router:auto"
+      system_prompt: "你是一个高效的代码实现者，快速准确地完成编码任务"
+      budget: "normal"
+
+    bug_hunter:
+      framework: "any"
+      model_strategy: "router:auto"
+      system_prompt: "你是一个专注的 bug 发现者，系统性地排查问题"
+      budget: "high"
+
+# ============================================================
+# 七、可观测性 (Observability)
+# ============================================================
+observability:
+  logging:
+    level: "INFO"          # DEBUG | INFO | WARNING | ERROR
+    format: "json"         # json | text
+
+  metrics:
+    enabled: true
+    prometheus_port: 9090  # 可选: Prometheus metrics 端点
+
+  tracing:
+    enabled: false
+    provider: "otel"       # otel | none

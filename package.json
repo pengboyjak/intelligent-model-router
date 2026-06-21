@@ -1,0 +1,24 @@
+{
+  "name": "intelligent-model-router",
+  "version": "2.0.0",
+  "description": "Provider-Agnostic, Agent-Agnostic, Visual Config — 智能模型路由系统",
+  "main": "router.ts",
+  "scripts": {
+    "gateway": "python gateway.py --port 8700",
+    "gateway:dev": "python gateway.py --port 8700 --reload",
+    "example": "python examples.py"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": ">=0.45.0",
+    "yaml": ">=2.0.0"
+  },
+  "keywords": [
+    "llm-router",
+    "model-router",
+    "ai-gateway",
+    "multi-provider",
+    "agent-orchestration",
+    "provider-agnostic"
+  ],
+  "license": "MIT"
+}

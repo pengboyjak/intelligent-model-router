@@ -1,0 +1,29 @@
+{
+  "_说明": "将此文件的内容合并到 ~/.claude/settings.json 的 hooks 部分，即可在 Claude Code 中启用自动模型路由",
+  "_注意": "hooks 功能需要 Claude Code 支持，请确认你的版本支持 hooks 机制",
+
+  "hooks": {
+    "PostToolUse": [
+      {
+        "description": "当 Agent 工具被调用时，根据任务类型自动选择最优模型",
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python D:\\Desktop\\claudebiancheng\\model-router\\hook_handler.py"
+          }
+        ]
+      }
+    ]
+  },
+
+  "_手动使用方式": "如果 hooks 不可用，可以通过 Skill 手动调用",
+  "_skill_config": {
+    "skills": {
+      "model-router": {
+        "description": "智能模型路由 —— 自动检测任务类型，选择最优模型执行",
+        "path": "D:\\Desktop\\claudebiancheng\\model-router\\SKILL.md"
+      }
+    }
+  }
+}
